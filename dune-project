@@ -7,7 +7,7 @@
 
 (package
  (name fitaday)
- (synopsis "Puzzle game webapp"))
+ (synopsis "A datepicker with a puzzling UI"))
 
 (dialect
  (name mlx)
