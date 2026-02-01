@@ -14,7 +14,8 @@
       "Bash(pnpm lint:fix:*)",
       "Bash(pnpm lint:*)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(pnpm test:ct:*)"
     ]
   }
 }
