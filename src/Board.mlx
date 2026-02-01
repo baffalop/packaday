@@ -5,6 +5,11 @@ module Tile = struct
     </div>
 end
 
+module Gap = struct
+  let[@react.component] make () =
+    <div className="w-16 h-16" />
+end
+
 module Row = struct
   let[@react.component] make ~children () =
   <div className="flex">
@@ -15,10 +20,11 @@ end
 let[@react.component] make () =
   <div className="flex flex-col">
     (Array.init 5 (fun row ->
-      let length = 10 - row in
+      let tiles = 10 - row in
+      let gaps = max 0 (row - 2) in
       <Row key=(string_of_int row)>
-        (Array.init length (fun i -> <Tile key=(string_of_int i) />)
-        |> React.array)
+        (Array.init gaps (fun i -> <Gap key=(Printf.sprintf "gap-%d" i) />) |> React.array)
+        (Array.init tiles (fun i -> <Tile key=(Printf.sprintf "tile-%d" i) />) |> React.array)
       </Row>
     )
     |> React.array)
