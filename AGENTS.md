@@ -8,6 +8,7 @@ Ocaml rules:
 - Add doc comments using (\*_ ... _) when there is something significant to explain.
 - Use mli files to keep module APIs constrained. Many tasks are best approached by writing the mli signature first.
   - When adding/changing values, be sure to keep the mli in sync, but don't add values to the mli unless they need to be exposed.
+- When installing packages, always add to dune-project depends stanza then install with `opam install . --deps-only`.
 - If you have a 'run diagnostics' tool, use it to verify correctness; assume `dune build --watch` is already running. If not, verify changes using `dune runtest`.
 
 Javascript rules:
