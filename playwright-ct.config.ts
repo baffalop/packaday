@@ -19,7 +19,8 @@ export default defineConfig({
       plugins: [
         react(),
         melange({
-          emitDir: 'src',
+          duneDir: '..',
+          emitDir: '../src',
           buildTarget: 'output',
           buildCommand: 'opam exec -- dune build @app',
           watchCommand: 'opam exec -- dune build --watch @app',
