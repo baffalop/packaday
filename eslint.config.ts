@@ -15,6 +15,7 @@ export default tseslint.config(
       '__snapshots__/**',
       'test-results/**',
       'playwright-report/**',
+      '.patches/**',
     ],
   },
   {

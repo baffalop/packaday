@@ -19,10 +19,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     ctPort: 3100,
     ctViteConfig: {
-      plugins: [
-        react(),
-        tailwindcss(),
-      ],
+      plugins: [react(), tailwindcss()],
       resolve: {
         alias: {
           // Resolve Melange runtime modules
