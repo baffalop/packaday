@@ -3,6 +3,7 @@ module App = struct
     <div className="flex items-center justify-center min-h-screen">
       <div className="flex flex-wrap max-w-56">
         <Tile />
+        <Tile />
       </div>
     </div>
 end
