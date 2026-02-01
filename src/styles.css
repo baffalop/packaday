@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Ensure component tests are also Tailwind targets */
+@source "./";
+@source "../tests/components/";
+
 body {
     @apply bg-rose-950;
 }
