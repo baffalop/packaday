@@ -1,17 +1,12 @@
 let tileSq = "w-16 h-16"
-let asTileSq className = tileSq ^ " " ^ className
 
 module Tile = struct
   let[@react.component] make ~(children: string) () =
-    <div className=(asTileSq "bg-amber-900 p-1")>
+    <div className=(tileSq ^ " bg-amber-900 p-1")>
       <div className="h-full border border-dashed border-amber-700 flex items-center justify-center text-2xl text-amber-950 font-bold">
         (React.string children)
       </div>
     </div>
-end
-
-module Gap = struct
-  let[@react.component] make () = <div className=tileSq />
 end
 
 module Row = struct
@@ -19,19 +14,40 @@ module Row = struct
     <div className="flex">children</div>
 end
 
+let months = [| "Jan"; "Feb"; "Mar"; "Apr"; "May"; "Jun"; "Jul"; "Aug"; "Sep"; "Oct"; "Nov"; "Dec" |]
+
 let[@react.component] make () =
-  let tile_num = ref 0 in
   <div className="flex flex-col">
-    (Array.init 5 (fun row ->
-      let tiles = 10 - row in
-      let gaps = max 0 (row - 2) in
-      <Row key=(string_of_int row)>
-        (Array.init gaps (fun i -> <Gap key=(Printf.sprintf "gap-%d" i) />) |> React.array)
-        (Array.init tiles (fun i ->
-          incr tile_num;
-          <Tile key=(Printf.sprintf "tile-%d" i)>(string_of_int !tile_num)</Tile>
+    (* Row 1: Jan-Jun *)
+    <Row>
+      (Array.sub months 0 6
+       |> Array.map (fun m -> <Tile key=("month-" ^ m)>m</Tile>)
+       |> React.array)
+    </Row>
+
+    (* Row 2: Jul-Dec *)
+    <Row>
+      (Array.sub months 6 6
+       |> Array.map (fun m -> <Tile key=("month-" ^ m)>m</Tile>)
+       |> React.array)
+    </Row>
+
+    (* Rows 3-6: Days 1-28, 7 per row *)
+    (Array.init 4 (fun row ->
+      let start_day = row * 7 + 1 in
+      <Row key=(Printf.sprintf "days-row-%d" row)>
+        (Array.init 7 (fun i ->
+          let day = start_day + i in
+          <Tile key=(Printf.sprintf "day-%d" day)>(string_of_int day)</Tile>
         ) |> React.array)
       </Row>
-    )
-    |> React.array)
+    ) |> React.array)
+
+    (* Row 7: Days 29-31 *)
+    <Row>
+      (Array.init 3 (fun i ->
+        let day = 29 + i in
+        <Tile key=(Printf.sprintf "day-%d" day)>(string_of_int day)</Tile>
+      ) |> React.array)
+    </Row>
   </div>
