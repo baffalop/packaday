@@ -15,8 +15,9 @@
     "dune:watch": "pnpm dune --watch",
     "test": "playwright test",
     "test:e2e": "playwright test tests/e2e",
-    "test:components": "playwright test -c playwright-ct.config.ts",
+    "test:ct": "playwright test -c playwright-ct.config.ts",
     "test:ui": "playwright test --ui",
+    "test:ct-ui": "playwright test --ui -c playwright-ct.config.ts",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report"
