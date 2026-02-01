@@ -45,6 +45,24 @@ function mlxResolverPlugin (options = {}) {
         }
       }
     },
+
+    handleHotUpdate ({ file, server }) {
+      const projectRoot = process.cwd()
+      const buildPrefix = join(projectRoot, '_build', buildContext, emitDir, buildTarget)
+
+      // When compiled JS changes in _build, trigger a full page reload
+      if (file.startsWith(buildPrefix) && file.endsWith('.js')) {
+        const relPath = file.slice(buildPrefix.length + 1).replace(/\.js$/, '.mlx')
+        const moduleId = '/' + relPath
+        const module = server.moduleGraph.getModuleById(moduleId)
+
+        if (module) {
+          server.moduleGraph.invalidateModule(module)
+          server.ws.send({ type: 'full-reload' })
+          return []
+        }
+      }
+    },
   }
 }
 
@@ -64,6 +82,8 @@ export default defineConfig({
   ],
   server: {
     watch: {
+      // Watch _build for compiled output changes
+      ignored: ['!**/_build/**'],
       awaitWriteFinish: {
         stabilityThreshold: 500,
         pollInterval: 20,
