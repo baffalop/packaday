@@ -6,7 +6,13 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(opam exec -- dune build:*)",
       "WebFetch(domain:api.github.com)",
-      "mcp__acp__Edit"
+      "mcp__acp__Edit",
+      "Bash(pnpm test:e2e:*)",
+      "Bash(pnpm test:components:*)",
+      "Bash(pnpm dune:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:fix:*)",
+      "Bash(pnpm lint:*)"
     ]
   }
 }
