@@ -19,4 +19,13 @@ test.describe('Piece.Button Component', () => {
     await component.hover()
     await expect(component).toHaveScreenshot('button-snake-hover.png')
   })
+
+  test('calls onSelect when clicked', async ({ mount }) => {
+    let selected: string | null = null
+    const component = await mount(
+      <PieceButton t='Rect' onSelect={(t: string) => { selected = t }} />
+    )
+    await component.click()
+    expect(selected).toBe('Rect')
+  })
 })

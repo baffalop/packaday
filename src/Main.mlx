@@ -1,0 +1,7 @@
+let () =
+  match ReactDOM.querySelector "#root" with
+  | Some root ->
+    let root = ReactDOM.Client.createRoot root in
+    ReactDOM.Client.render root <App />
+  | None ->
+    Js.Console.error "Failed to start React: couldn't find the #root element"

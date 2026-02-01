@@ -1,17 +1,16 @@
-module App = struct
-  let[@react.component] make () =
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="flex items-start justify-center gap-12">
-        <Board />
-        <Piece.Panel />
-      </div>
-    </div>
-end
+let[@react.component] make () =
+  let (selected, setSelected) = React.useState (fun () -> None) in
 
-let () =
-  match ReactDOM.querySelector "#root" with
-  | Some root ->
-    let root = ReactDOM.Client.createRoot root in
-    ReactDOM.Client.render root <App />
-  | None ->
-    Js.Console.error "Failed to start React: couldn't find the #root element"
+  let handleClick = fun _ ->
+    setSelected (fun _ -> None)
+  in
+
+  <div className="flex items-center justify-center min-h-screen" onClick=handleClick>
+    <div className="flex items-start justify-center gap-12">
+      <Board />
+      <Piece.Panel onPieceSelect=(fun t -> setSelected (fun _ -> Some t)) />
+    </div>
+    (match selected with
+     | Some piece -> <Piece.Floating piece />
+     | None -> React.null)
+  </div>

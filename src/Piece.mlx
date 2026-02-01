@@ -62,14 +62,12 @@ module Shape = struct
       [| O; H; H |];
     |]
 
-  let cell_size = 8
-
-  let[@react.component] make ~(t:t) () =
+  let[@react.component] make ~(t:t) ?(cellSize=8) ?(className="fill-rose-500") () =
     let spec = spec_of_t t in
     let rows = Array.length spec in
     let cols = if rows > 0 then Array.length spec.(0) else 0 in
-    let height = rows * cell_size in
-    let width = cols * cell_size in
+    let height = rows * cellSize in
+    let width = cols * cellSize in
     <svg
       width=(string_of_int width)
       height=(string_of_int height)
@@ -82,15 +80,15 @@ module Shape = struct
           match seg with
           | O -> React.null
           | H ->
-            let x = col_idx * cell_size in
-            let y = row_idx * cell_size in
+            let x = col_idx * cellSize in
+            let y = row_idx * cellSize in
             <rect
               key=(Printf.sprintf "%d-%d" row_idx col_idx)
               x=(string_of_int x)
               y=(string_of_int y)
-              width=(string_of_int cell_size)
-              height=(string_of_int cell_size)
-              className="fill-rose-500"
+              width=(string_of_int cellSize)
+              height=(string_of_int cellSize)
+              className
             />
         ) |> React.array
       ) |> React.array)
@@ -98,21 +96,38 @@ module Shape = struct
 end
 
 module Button = struct
-  let[@react.component] make ~(t:t) () =
+  external stopPropagation : React.Event.Mouse.t -> unit = "stopPropagation" [@@mel.send]
+
+  let[@react.component] make ~(t:t) ?onSelect () =
     <button
       type_="button"
       className="piece-btn p-1 rounded cursor-pointer hover:bg-rose-900 max-w-min max-h-min"
-      onClick=(fun _ -> Js.Console.log t)
+      onClick=(fun e ->
+        stopPropagation e;
+        Option.iter (fun f -> f t) onSelect)
     >
       <Shape t />
     </button>
 end
 
 module Panel = struct
-  let[@react.component] make () =
+  let[@react.component] make ?onPieceSelect () =
     <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2">
       ([| `Rect; `Thumb; `L; `Snake; `T; `U; `Z; `Corner |]
-      |> Array.map (fun t -> <Button t />)
+      |> Array.map (fun t -> <Button t ?onSelect=onPieceSelect />)
       |> React.array)
+    </div>
+end
+
+module Floating = struct
+  let[@react.component] make ~(piece:t) () =
+    let mouse = Hooks.useMouse () in
+    let style = ReactDOM.Style.make
+      ~left:(Printf.sprintf "%dpx" mouse.x)
+      ~top:(Printf.sprintf "%dpx" mouse.y)
+      ()
+    in
+    <div style className="floating-piece fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+      <Shape t=piece cellSize=64 className="fill-rose-400/40" />
     </div>
 end

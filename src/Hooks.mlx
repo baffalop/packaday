@@ -1,0 +1,30 @@
+type mouse_state = {
+  x: int;
+  y: int;
+}
+
+type mouse_event
+
+external addEventListener : string -> (mouse_event -> unit) -> unit = "addEventListener"
+[@@mel.scope "document"]
+
+external removeEventListener : string -> (mouse_event -> unit) -> unit = "removeEventListener"
+[@@mel.scope "document"]
+
+external clientX : mouse_event -> int = "clientX" [@@mel.get]
+external clientY : mouse_event -> int = "clientY" [@@mel.get]
+
+let useMouse () : mouse_state =
+  let (state, setState) = React.useState (fun () -> {x = 0; y = 0}) in
+
+  React.useEffect0 (fun () ->
+    let handleMove = fun (e: mouse_event) ->
+      let x = clientX e in
+      let y = clientY e in
+      setState (fun _ -> {x; y})
+    in
+    addEventListener "mousemove" handleMove;
+    Some (fun () -> removeEventListener "mousemove" handleMove)
+  );
+
+  state
