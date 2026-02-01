@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"pnpm dune:watch\" \"vite\"",
     "build": "pnpm dune && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "dune": "opam exec -- dune build @app",
-    "dune:watch": "pnpm dune -- --watch"
+    "dune:watch": "pnpm dune --watch"
   },
   "packageManager": "pnpm@10.19.0",
   "pnpm": {
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.18",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.2",
     "neostandard": "^0.12.2",
     "tailwindcss": "^4.1.18",
