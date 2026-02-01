@@ -3,7 +3,7 @@ let tileSq = "w-16 h-16"
 module Tile = struct
   let[@react.component] make ~(children: string) () =
     <div className=(tileSq ^ " bg-amber-900 p-1")>
-      <div className="h-full border border-dashed border-amber-700 flex items-center justify-center text-2xl text-amber-950 font-bold">
+      <div className="h-full border border-dashed border-amber-700 flex items-center justify-center text-2xl text-amber-950 font-bold cursor-default select-none">
         (React.string children)
       </div>
     </div>
