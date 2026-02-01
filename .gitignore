@@ -1,0 +1,27 @@
+# OCaml/Dune
+_build/
+_opam/
+*.install
+*.merlin
+.merlin
+
+# Melange promoted files
+src/**/*.js
+
+# Node
+node_modules/
+dist/
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local

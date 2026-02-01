@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(opam exec -- dune build:*)",
+      "WebFetch(domain:api.github.com)"
+    ]
+  }
+}
