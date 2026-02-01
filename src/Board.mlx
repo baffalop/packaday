@@ -1,6 +1,9 @@
+let tileSq = "w-16 h-16"
+let asTileSq className = tileSq ^ " " ^ className
+
 module Tile = struct
   let[@react.component] make ~(children: string) () =
-    <div className="w-16 h-16 bg-amber-900 p-1">
+    <div className=(asTileSq "bg-amber-900 p-1")>
       <div className="h-full border border-dashed border-amber-700 flex items-center justify-center text-2xl text-amber-950 font-bold">
         (React.string children)
       </div>
@@ -8,15 +11,12 @@ module Tile = struct
 end
 
 module Gap = struct
-  let[@react.component] make () =
-    <div className="w-16 h-16" />
+  let[@react.component] make () = <div className=tileSq />
 end
 
 module Row = struct
   let[@react.component] make ~children () =
-  <div className="flex">
-    children
-  </div>
+    <div className="flex">children</div>
 end
 
 let[@react.component] make () =
