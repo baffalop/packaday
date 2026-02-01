@@ -5,6 +5,9 @@ _opam/
 *.merlin
 .merlin
 
+# Melange promoted files
+src/**/*.js
+
 # Node
 node_modules/
 dist/
