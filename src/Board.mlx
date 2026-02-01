@@ -1,7 +1,9 @@
 module Tile = struct
-  let[@react.component] make () =
+  let[@react.component] make ~(children: string) () =
     <div className="w-16 h-16 bg-amber-900 p-1">
-      <div className="h-full border border-dashed border-amber-700" />
+      <div className="h-full border border-dashed border-amber-700 flex items-center justify-center text-2xl text-amber-950 font-bold">
+        (React.string children)
+      </div>
     </div>
 end
 
@@ -18,13 +20,17 @@ module Row = struct
 end
 
 let[@react.component] make () =
+  let tile_num = ref 0 in
   <div className="flex flex-col">
     (Array.init 5 (fun row ->
       let tiles = 10 - row in
       let gaps = max 0 (row - 2) in
       <Row key=(string_of_int row)>
         (Array.init gaps (fun i -> <Gap key=(Printf.sprintf "gap-%d" i) />) |> React.array)
-        (Array.init tiles (fun i -> <Tile key=(Printf.sprintf "tile-%d" i) />) |> React.array)
+        (Array.init tiles (fun i ->
+          incr tile_num;
+          <Tile key=(Printf.sprintf "tile-%d" i)>(string_of_int !tile_num)</Tile>
+        ) |> React.array)
       </Row>
     )
     |> React.array)
