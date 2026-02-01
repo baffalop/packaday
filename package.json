@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "pnpm build && gh-pages -d dist",
+    "pages": "pnpm build && gh-pages -d dist",
     "dune": "opam exec -- dune build @app",
     "dune:watch": "pnpm dune --watch"
   },
