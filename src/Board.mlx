@@ -1,0 +1,12 @@
+module Tile = struct
+  let[@react.component] make () =
+    <div className="w-16 h-16 bg-amber-900 p-1">
+      <div className="h-full border border-dashed border-amber-700" />
+    </div>
+end
+
+let[@react.component] make () =
+  <div className="flex flex-wrap max-w-56">
+    (Array.init 10 (fun i -> <Tile key=(string_of_int i) />)
+    |> React.array)
+  </div>
