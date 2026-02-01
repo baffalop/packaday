@@ -1,83 +1,10 @@
 import { defineConfig } from 'vite'
-import melangePlugin from 'vite-plugin-melange'
+import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { join } from 'path'
-import { readFileSync } from 'fs'
-
-// Custom plugin to resolve .mlx files to their compiled .js equivalents
-function mlxResolverPlugin (options = {}) {
-  const buildContext = options.buildContext || 'default'
-  const emitDir = options.emitDir || '.'
-  const buildTarget = options.buildTarget || 'output'
-
-  return {
-    name: 'vite-plugin-mlx-resolver',
-    enforce: 'pre',
-
-    resolveId (id, importer, options) {
-      if (id.endsWith('.mlx')) {
-        return id
-      }
-    },
-
-    load (id) {
-      if (id.endsWith('.mlx')) {
-        const projectRoot = process.cwd()
-        // id comes in as URL path like "/src/App.mlx"
-        // Strip leading slash to get relative path
-        const relPath = id.startsWith('/') ? id.slice(1) : id
-        // Build path: _build/default/src/output/src/App.js
-        const jsPath = join(
-          projectRoot,
-          '_build',
-          buildContext,
-          emitDir,
-          buildTarget,
-          relPath.replace(/\.mlx$/, '.js'),
-        )
-        // Read and return the compiled JS content directly
-        try {
-          return readFileSync(jsPath, 'utf-8')
-        } catch (e) {
-          console.error(`Failed to load compiled JS for ${id}: ${e.message}`)
-          console.error(`Looked for: ${jsPath}`)
-          return ''
-        }
-      }
-    },
-
-    handleHotUpdate ({ file, server }) {
-      const projectRoot = process.cwd()
-      const buildPrefix = join(projectRoot, '_build', buildContext, emitDir, buildTarget)
-
-      // When compiled JS changes in _build, trigger a full page reload
-      if (file.startsWith(buildPrefix) && file.endsWith('.js')) {
-        const relPath = file.slice(buildPrefix.length + 1).replace(/\.js$/, '.mlx')
-        const moduleId = '/' + relPath
-        const module = server.moduleGraph.getModuleById(moduleId)
-
-        if (module) {
-          server.moduleGraph.invalidateModule(module)
-          server.ws.send({ type: 'full-reload' })
-          return []
-        }
-      }
-    },
-  }
-}
 
 export default defineConfig({
   plugins: [
-    mlxResolverPlugin({
-      emitDir: 'src',
-      buildTarget: 'output',
-    }),
-    melangePlugin({
-      emitDir: 'src',
-      buildTarget: 'output',
-      buildCommand: 'opam exec -- dune build @app',
-      watchCommand: 'opam exec -- dune build --watch @app',
-    }),
+    react(),
     tailwindcss(),
   ],
   server: {
