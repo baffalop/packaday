@@ -1,8 +1,10 @@
 module App = struct
   let[@react.component] make () =
-    <div className="flex items-center justify-center gap-12 min-h-screen">
-      <Board />
-      <Piece.Panel />
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-start justify-center gap-12">
+        <Board />
+        <Piece.Panel />
+      </div>
     </div>
 end
 
