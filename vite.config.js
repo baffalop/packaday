@@ -4,6 +4,7 @@ import melange from 'vite-plugin-melange'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  base: '/packaday/',
   plugins: [
     react(),
     melange({
