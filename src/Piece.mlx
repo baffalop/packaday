@@ -107,3 +107,12 @@ module Button = struct
       <Shape t />
     </button>
 end
+
+module Panel = struct
+  let[@react.component] make () =
+    <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2">
+      ([| `Rect; `Thumb; `Corner; `Snake; `U; `L; `T; `Z |]
+      |> Array.map (fun t -> <Button t />)
+      |> React.array)
+    </div>
+end
