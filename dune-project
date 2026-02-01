@@ -1,12 +1,12 @@
 (lang dune 3.17)
-(name fitaday)
+(name packaday)
 
 (using melange 0.1)
 
 (generate_opam_files true)
 
 (package
- (name fitaday)
+ (name packaday)
  (synopsis "A datepicker with a puzzling UI"))
 
 (dialect
