@@ -2,7 +2,7 @@ let tileSq = "w-18 h-18"
 
 module Tile = struct
   let[@react.component] make ~(children: string) () =
-    <div className=(tileSq ^ " bg-amber-900 p-0.5")>
+    <div className=("tile " ^ tileSq ^ " bg-amber-900 p-0.5")>
       <div className="h-full border border-dashed border-amber-700 rounded-sm flex items-center justify-center text-2xl text-amber-950 font-bold cursor-default select-none">
         (React.string children)
       </div>
@@ -17,7 +17,7 @@ end
 let months = [| "Jan"; "Feb"; "Mar"; "Apr"; "May"; "Jun"; "Jul"; "Aug"; "Sep"; "Oct"; "Nov"; "Dec" |]
 
 let[@react.component] make () =
-  <div className="flex flex-col">
+  <div className="board flex flex-col">
     (* Row 1: Jan-Jun *)
     <Row>
       (Array.sub months 0 6

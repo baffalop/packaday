@@ -28,7 +28,7 @@ test.describe('Packaday Calendar', () => {
     await page.goto('/')
 
     // Check that we have the expected number of tile elements (12 months + 31 days = 43)
-    const tiles = page.locator('div.bg-amber-900')
+    const tiles = page.locator('.tile')
     await expect(tiles).toHaveCount(43)
   })
 

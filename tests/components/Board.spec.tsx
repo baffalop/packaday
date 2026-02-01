@@ -44,7 +44,7 @@ test.describe('Board Component', () => {
     const component = await mount(<Board />)
 
     // 12 months + 31 days = 43 tiles
-    const tiles = component.locator('div.bg-amber-900')
+    const tiles = component.locator('.tile')
     await expect(tiles).toHaveCount(43)
   })
 
