@@ -1,9 +1,9 @@
 module App = struct
   let[@react.component] make () =
     <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-5xl font-bold text-amber-600">
-        (React.string "Hello, Fitaday!")
-      </h1>
+      <div className="flex flex-wrap max-w-56">
+        <Tile />
+      </div>
     </div>
 end
 
