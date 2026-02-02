@@ -12,4 +12,4 @@
   (alias app))
  (action
   (setenv NODE_TEST 1
-   (bash "grep -l 'from.*\"./Test.js\"' *.js | xargs node --test"))))
+   (bash "grep -l Melange__Test output/src/*.js | xargs node --test"))))

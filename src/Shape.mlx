@@ -95,17 +95,15 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
 
 let () = Test.run @@ fun () ->
   let open Fest in
-  test "of_piece Rect" @@ fun () ->
-    expect |> deep_equal
-      (of_piece `Rect)
+  test "of_piece Thumb" @@ fun () ->
+    expect |> deep_equal (of_piece `Thumb)
       [|
-        [| H; H |];
+        [| O; H |];
         [| H; H |];
         [| H; H |];
       |];
   test "of_piece Corner" @@ fun () ->
-    expect |> deep_equal
-      (of_piece `Corner)
+    expect |> deep_equal (of_piece `Corner)
       [|
         [| H; H; H |];
         [| O; O; H |];
