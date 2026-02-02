@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
 test.describe('Piece Interaction', () => {
   test('clicking button shows floating piece that follows mouse', async ({ page }) => {

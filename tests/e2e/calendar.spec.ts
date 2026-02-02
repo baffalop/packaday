@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './setup'
 
 test('renders the calendar', async ({ page }) => {
   await page.goto('/')
