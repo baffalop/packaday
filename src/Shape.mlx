@@ -63,6 +63,34 @@ let of_piece : piece -> t = function
 
 let string_of_piece = [%mel.raw {|tag => tag|}]
 
+let rotate_cw t =
+  let rows = Array.length t in
+  let cols = if rows > 0 then Array.length t.(0) else 0 in
+  Array.init cols (fun new_row ->
+    Array.init rows (fun new_col ->
+      t.(rows - 1 - new_col).(new_row)
+    )
+  )
+
+let rotate_ccw t =
+  let rows = Array.length t in
+  let cols = if rows > 0 then Array.length t.(0) else 0 in
+  Array.init cols (fun new_row ->
+    Array.init rows (fun new_col ->
+      t.(new_col).(cols - 1 - new_row)
+    )
+  )
+
+let flip_horiz t =
+  Array.map (fun row ->
+    let len = Array.length row in
+    Array.init len (fun i -> row.(len - 1 - i))
+  ) t
+
+let flip_vert t =
+  let len = Array.length t in
+  Array.init len (fun i -> t.(len - 1 - i))
+
 let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500") () =
   let rows = Array.length t in
   let cols = if rows > 0 then Array.length t.(0) else 0 in
@@ -93,19 +121,78 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
     ) |> React.array)
   </svg>
 
-let () = Test.run @@ fun () ->
-  let open Fest in
-  test "of_piece Thumb" @@ fun () ->
-    expect |> deep_equal (of_piece `Thumb)
-      [|
-        [| O; H |];
-        [| H; H |];
-        [| H; H |];
-      |];
-  test "of_piece Corner" @@ fun () ->
-    expect |> deep_equal (of_piece `Corner)
-      [|
-        [| H; H; H |];
-        [| O; O; H |];
-        [| O; O; H |];
-      |]
+module Test = struct
+  open Fest
+
+  let () = Test.run @@ fun () ->
+    test "of_piece Thumb" @@ fun () ->
+      expect |> deep_equal (of_piece `Thumb)
+        [|
+          [| O; H |];
+          [| H; H |];
+          [| H; H |];
+        |];
+    test "rotate_cw Thumb" @@ fun () ->
+      expect |> deep_equal (rotate_cw @@ of_piece `Thumb)
+        [|
+          [| H; H; O |];
+          [| H; H; H |];
+        |];
+    test "rotate_ccw Thumb" @@ fun () ->
+      expect |> deep_equal (rotate_ccw @@ of_piece `Thumb)
+        [|
+          [| H; H; H |];
+          [| O; H; H |];
+        |];
+    test "flip_horiz Thumb" @@ fun () ->
+      expect |> deep_equal (flip_horiz @@ of_piece `Thumb)
+        [|
+          [| H; O |];
+          [| H; H |];
+          [| H; H |];
+        |];
+    test "flip_vert Thumb" @@ fun () ->
+      expect |> deep_equal (flip_vert @@ of_piece `Thumb)
+        [|
+          [| H; H |];
+          [| H; H |];
+          [| O; H |];
+        |];
+
+    test "of_piece Snake" @@ fun () ->
+      expect |> deep_equal (of_piece `Snake)
+        [|
+          [| H; O |];
+          [| H; H |];
+          [| O; H |];
+          [| O; H |];
+        |];
+    test "rotate_cw Snake" @@ fun () ->
+      expect |> deep_equal (rotate_cw @@ of_piece `Snake)
+        [|
+          [| O; O; H; H |];
+          [| H; H; H; O |];
+        |];
+    test "rotate_ccw Snake" @@ fun () ->
+      expect |> deep_equal (rotate_ccw @@ of_piece `Snake)
+        [|
+          [| O; H; H; H |];
+          [| H; H; O; O |];
+        |];
+    test "flip_horiz Snake" @@ fun () ->
+      expect |> deep_equal (flip_horiz @@ of_piece `Snake)
+        [|
+          [| O; H |];
+          [| H; H |];
+          [| H; O |];
+          [| H; O |];
+        |];
+    test "flip_vert Snake" @@ fun () ->
+      expect |> deep_equal (flip_vert @@ of_piece `Snake)
+        [|
+          [| O; H |];
+          [| O; H |];
+          [| H; H |];
+          [| H; O |];
+        |]
+end

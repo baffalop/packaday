@@ -17,6 +17,11 @@ val of_piece : piece -> t
 
 val string_of_piece : piece -> string
 
+val rotate_cw : t -> t
+val rotate_ccw : t -> t
+val flip_horiz : t -> t
+val flip_vert : t -> t
+
 val makeProps :
   t:t ->
   ?cellSize:int ->
