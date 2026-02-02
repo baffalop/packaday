@@ -3,30 +3,20 @@ type t = Shape.piece
 module Button = struct
   external stopPropagation : React.Event.Mouse.t -> unit = "stopPropagation" [@@mel.send]
 
-  let[@react.component] make ~(t:t) ?onSelect () =
+  let[@react.component] make ~(t:t) ~onSelect () =
     <button
       type_="button"
       className="piece-btn p-1 rounded cursor-pointer hover:bg-rose-900 max-w-min max-h-min"
       onClick=(fun e ->
         stopPropagation e;
-        Option.iter (fun f ->
-          let coord : Geometry.coord = {
-            x = React.Event.Mouse.clientX e;
-            y = React.Event.Mouse.clientY e;
-          } in
-          f (t, coord)) onSelect)
+        let coord : Geometry.coord = {
+          x = React.Event.Mouse.clientX e;
+          y = React.Event.Mouse.clientY e;
+        } in
+        onSelect (t, coord))
     >
       <Shape t=(Shape.of_piece t) />
     </button>
-end
-
-module Panel = struct
-  let[@react.component] make ?onPieceSelect () =
-    <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2">
-      ([| `Rect; `Thumb; `L; `Snake; `T; `U; `Z; `Corner |]
-      |> Array.map (fun t -> <Button t ?onSelect=onPieceSelect />)
-      |> React.array)
-    </div>
 end
 
 module Floating = struct
