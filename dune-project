@@ -19,6 +19,7 @@
   ocaml-lsp-server
   ocamlformat
   odig
+  melange-fest
  )
  (allow_empty))
 

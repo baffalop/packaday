@@ -90,3 +90,22 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
       ) |> React.array
     ) |> React.array)
   </svg>
+
+let () = Test.run @@ fun () ->
+  let open Fest in
+  test "of_piece Rect" @@ fun () ->
+    expect |> deep_equal
+      (of_piece `Rect)
+      [|
+        [| H; H |];
+        [| H; H |];
+        [| H; H |];
+      |];
+  test "of_piece Corner" @@ fun () ->
+    expect |> deep_equal
+      (of_piece `Corner)
+      [|
+        [| H; H; H |];
+        [| O; O; H |];
+        [| O; O; H |];
+      |]

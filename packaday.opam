@@ -12,6 +12,7 @@ depends: [
   "ocaml-lsp-server"
   "ocamlformat"
   "odig"
+  "melange-fest"
   "odoc" {with-doc}
 ]
 build: [
