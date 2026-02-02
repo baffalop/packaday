@@ -9,11 +9,10 @@ module Button = struct
       className="piece-btn p-1 rounded cursor-pointer hover:bg-rose-900 max-w-min max-h-min"
       onClick=(fun e ->
         stopPropagation e;
-        let coord : Geometry.coord = {
+        onSelect (t, Geometry.{
           x = React.Event.Mouse.clientX e;
           y = React.Event.Mouse.clientY e;
-        } in
-        onSelect (t, coord))
+        }))
     >
       <Shape t=(Shape.of_piece t) />
     </button>
