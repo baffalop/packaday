@@ -1,18 +1,4 @@
-type t = [
-  | `Rect
-  | `Thumb
-  | `Corner
-  | `Snake
-  | `U
-  | `L
-  | `T
-  | `Z
-]
-
-module Shape : sig
-  val makeProps : t:t -> ?cellSize:int -> ?className:string -> ?key:string -> unit -> < t:t; cellSize:int option; className:string option > Js.t
-  val make : < t:t; cellSize:int option; className:string option > Js.t -> React.element
-end
+type t = Shape.piece
 
 module Button : sig
   val makeProps : t:t -> ?onSelect:((t * Geometry.coord) -> unit) -> ?key:string -> unit -> < t:t; onSelect:((t * Geometry.coord) -> unit) option > Js.t

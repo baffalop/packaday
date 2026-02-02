@@ -1,0 +1,92 @@
+type piece = [
+  | `Rect
+  | `Thumb
+  | `Corner
+  | `Snake
+  | `U
+  | `L
+  | `T
+  | `Z
+]
+
+(** A single cell: O (empty/gap) or H (filled) *)
+type segment =
+  | O
+  | H
+
+type t = segment array array
+
+let of_piece : piece -> t = function
+  | `Rect -> [|
+    [| H; H |];
+    [| H; H |];
+    [| H; H |];
+  |]
+  | `Thumb -> [|
+    [| O; H |];
+    [| H; H |];
+    [| H; H |];
+  |]
+  | `Corner -> [|
+    [| H; H; H |];
+    [| O; O; H |];
+    [| O; O; H |];
+  |]
+  | `L -> [|
+    [| H; H |];
+    [| H; O |];
+    [| H; O |];
+    [| H; O |];
+  |]
+  | `Snake -> [|
+    [| H; O |];
+    [| H; H |];
+    [| O; H |];
+    [| O; H |];
+  |]
+  | `T -> [|
+    [| H; O |];
+    [| H; H |];
+    [| H; O |];
+    [| H; O |];
+  |]
+  | `U -> [|
+    [| H; H |];
+    [| O; H |];
+    [| H; H |];
+  |]
+  | `Z -> [|
+    [| H; H; O |];
+    [| O; H; O |];
+    [| O; H; H |];
+  |]
+
+let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500") () =
+  let rows = Array.length t in
+  let cols = if rows > 0 then Array.length t.(0) else 0 in
+  let height = rows * cellSize in
+  let width = cols * cellSize in
+  <svg
+    width=(string_of_int width)
+    height=(string_of_int height)
+    viewBox=(Printf.sprintf "0 0 %d %d" width height)
+    className="piece-shape"
+  >
+    (t |> Array.mapi (fun row_idx row ->
+      row |> Array.mapi (fun col_idx seg ->
+        match seg with
+        | O -> React.null
+        | H ->
+          let x = col_idx * cellSize in
+          let y = row_idx * cellSize in
+          <rect
+            key=(Printf.sprintf "%d-%d" row_idx col_idx)
+            x=(string_of_int x)
+            y=(string_of_int y)
+            width=(string_of_int cellSize)
+            height=(string_of_int cellSize)
+            className
+          />
+      ) |> React.array
+    ) |> React.array)
+  </svg>
