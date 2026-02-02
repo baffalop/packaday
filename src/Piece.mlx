@@ -38,6 +38,6 @@ module Floating = struct
       ()
     in
     <div style className="floating-piece fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-      <Shape t=(Shape.of_piece piece) cellSize=64 className="fill-rose-400/40" />
+      <Shape t=(Shape.of_piece piece) cellSize=66 className="fill-rose-400/40" />
     </div>
 end
