@@ -104,7 +104,12 @@ module Button = struct
       className="piece-btn p-1 rounded cursor-pointer hover:bg-rose-900 max-w-min max-h-min"
       onClick=(fun e ->
         stopPropagation e;
-        Option.iter (fun f -> f t) onSelect)
+        Option.iter (fun f ->
+          let coord : Geometry.coord = {
+            x = React.Event.Mouse.clientX e;
+            y = React.Event.Mouse.clientY e;
+          } in
+          f (t, coord)) onSelect)
     >
       <Shape t />
     </button>
@@ -120,11 +125,11 @@ module Panel = struct
 end
 
 module Floating = struct
-  let[@react.component] make ~(piece:t) () =
-    let mouse = Hooks.useMouse () in
+  let[@react.component] make ~(piece:t) ~(initial:Geometry.coord) () =
+    let pos = Option.value (Hooks.useMouse ()) ~default:initial in
     let style = ReactDOM.Style.make
-      ~left:(Printf.sprintf "%dpx" mouse.x)
-      ~top:(Printf.sprintf "%dpx" mouse.y)
+      ~left:(Printf.sprintf "%dpx" pos.x)
+      ~top:(Printf.sprintf "%dpx" pos.y)
       ()
     in
     <div style className="floating-piece fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none">

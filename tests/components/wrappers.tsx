@@ -8,7 +8,9 @@ export function Board () {
   return React.createElement(BoardComponent, makeProps(undefined, undefined))
 }
 
-export function PieceButton ({ t, onSelect }: { t: string, onSelect?: (t: string) => void }) {
+type Coord = { x: number, y: number }
+
+export function PieceButton ({ t, onSelect }: { t: string, onSelect?: (args: [string, Coord]) => void }) {
   return React.createElement(Button.make, Button.makeProps(t, onSelect, undefined, undefined))
 }
 
@@ -16,6 +18,6 @@ export function PieceShape ({ t, cellSize, className }: { t: string, cellSize?: 
   return React.createElement(Shape.make, Shape.makeProps(t, cellSize, className, undefined, undefined))
 }
 
-export function PieceFloating ({ piece }: { piece: string }) {
-  return React.createElement(Floating.make, Floating.makeProps(piece, undefined, undefined))
+export function PieceFloating ({ piece, initial }: { piece: string, initial: Coord }) {
+  return React.createElement(Floating.make, Floating.makeProps(piece, initial, undefined, undefined))
 }

@@ -8,9 +8,9 @@ let[@react.component] make () =
   <div className="flex items-center justify-center min-h-screen" onClick=handleClick>
     <div className="flex items-start justify-center gap-12">
       <Board />
-      <Piece.Panel onPieceSelect=(fun t -> setSelected (fun _ -> Some t)) />
+      <Piece.Panel onPieceSelect=(fun (t, coord) -> setSelected (fun _ -> Some (t, coord))) />
     </div>
     (match selected with
-     | Some piece -> <Piece.Floating piece />
+     | Some (piece, coord) -> <Piece.Floating piece initial=coord />
      | None -> React.null)
   </div>

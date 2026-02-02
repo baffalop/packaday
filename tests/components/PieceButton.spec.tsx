@@ -20,12 +20,14 @@ test.describe('Piece.Button Component', () => {
     await expect(component).toHaveScreenshot('button-snake-hover.png')
   })
 
-  test('calls onSelect when clicked', async ({ mount }) => {
-    let selected: string | null = null
+  test('calls onSelect with piece and coordinates when clicked', async ({ mount }) => {
+    let selected: [string, { x: number, y: number }] | null = null
     const component = await mount(
-      <PieceButton t='Rect' onSelect={(t: string) => { selected = t }} />
+      <PieceButton t='Z' onSelect={(args) => { selected = args }} />
     )
     await component.click()
-    expect(selected).toBe('Rect')
+    expect(selected?.[0]).toBe('Z')
+    expect(selected?.[1].x).toBeGreaterThan(0)
+    expect(selected?.[1].y).toBeGreaterThan(0)
   })
 })
