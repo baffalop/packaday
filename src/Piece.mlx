@@ -7,7 +7,7 @@ type t = [
   | `L
   | `T
   | `Z
-] [@@mel.string]
+]
 
 module Shape = struct
   (** intermediate representation for individual squares of a piece *)
