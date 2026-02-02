@@ -4,7 +4,7 @@ module PieceSelectPanel = struct
   let[@react.component] make ~onPieceSelect () =
     <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2">
       ([| `Rect; `Thumb; `L; `Snake; `T; `U; `Z; `Corner |]
-      |> Array.map (fun t -> <Piece.Button t onSelect=onPieceSelect />)
+        |> Array.map (fun t -> <Piece.Button t key=(Shape.string_of_piece t) onSelect=onPieceSelect />)
       |> React.array)
     </div>
 end

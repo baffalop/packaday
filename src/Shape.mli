@@ -15,6 +15,8 @@ type t
 
 val of_piece : piece -> t
 
+val string_of_piece : piece -> string
+
 val makeProps :
   t:t ->
   ?cellSize:int ->

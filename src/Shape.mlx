@@ -61,6 +61,8 @@ let of_piece : piece -> t = function
     [| O; H; H |];
   |]
 
+let string_of_piece = [%mel.raw {|tag => tag|}]
+
 let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500") () =
   let rows = Array.length t in
   let cols = if rows > 0 then Array.length t.(0) else 0 in
