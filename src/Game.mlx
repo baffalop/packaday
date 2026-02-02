@@ -1,0 +1,23 @@
+module PieceSelectPanel = struct
+  let[@react.component] make ~onPieceSelect () =
+    <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2">
+      ([| `Rect; `Thumb; `L; `Snake; `T; `U; `Z; `Corner |]
+      |> Array.map (fun t -> <Piece.Button t onSelect=onPieceSelect />)
+      |> React.array)
+    </div>
+end
+
+let[@react.component] make () =
+  let (selected, setSelected) = React.useState (fun () -> None) in
+
+  let handleClickAnywhere _ = setSelected (fun _ -> None) in
+
+  <div className="flex items-center justify-center min-h-screen" onClick=handleClickAnywhere>
+    <div className="flex items-start justify-center gap-12">
+      <Board />
+      <PieceSelectPanel onPieceSelect=(fun (t, coord) -> setSelected (fun _ -> Some (t, coord))) />
+    </div>
+    (match selected with
+     | Some (piece, coord) -> <Piece.Floating piece initial=coord />
+     | None -> React.null)
+  </div>
