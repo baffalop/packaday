@@ -2,6 +2,8 @@
 
 import * as Caml_array from "melange.js/caml_array.js";
 import * as Melange__Playwright from "./Playwright.js";
+import * as Packaday__Board from "packaday/Board.js";
+import * as JsxRuntime from "react/jsx-runtime";
 
 const months = [
   "Jan",
@@ -20,6 +22,11 @@ const months = [
 
 function run_tests(helpers) {
   helpers.describe("Board Component", (function (param) {
+          helpers.test("renders board (direct mount)", (function (fixtures) {
+                  return Melange__Playwright.let$great(fixtures.mount_element(JsxRuntime.jsx(Packaday__Board.make, Packaday__Board.makeProps(undefined, undefined))), (function (component) {
+                                return Melange__Playwright.to_be_visible(helpers.expect(component));
+                              }));
+                }));
           helpers.test("renders board", (function (fixtures) {
                   return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
                                 return Melange__Playwright.to_be_visible(helpers.expect(component));
@@ -94,4 +101,4 @@ function run_tests(helpers) {
 export {
   run_tests ,
 }
-/* No side effect */
+/* Packaday__Board Not a pure module */

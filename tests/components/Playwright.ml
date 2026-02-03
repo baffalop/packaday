@@ -20,6 +20,7 @@ external mouse_move : mouse -> int -> int -> unit Js.Promise.t = "move" [@@mel.s
 (* Fixtures - passed to test callback *)
 type fixtures =
   < mount : string -> locator Js.Promise.t [@mel.meth]
+  ; mount_element : React.element -> locator Js.Promise.t [@mel.meth]
   ; page : page
   >
   Js.t

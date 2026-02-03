@@ -13,6 +13,7 @@ val get_by_text_options : ?exact:bool -> unit -> get_by_text_options
 
 type fixtures =
   < mount : string -> locator Js.Promise.t [@mel.meth]
+  ; mount_element : React.element -> locator Js.Promise.t [@mel.meth]
   ; page : page
   >
   Js.t

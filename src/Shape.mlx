@@ -136,7 +136,7 @@ let variations : piece -> t array =
 module Test = struct
   open Fest
 
-  let () = Test.run @@ fun () ->
+  let () = Test_inline.run @@ fun () ->
     test "of_piece Thumb" @@ fun () ->
       expect |> deep_equal (of_piece `Thumb)
         [|

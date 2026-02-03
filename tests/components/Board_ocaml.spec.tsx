@@ -9,14 +9,19 @@ import { run_tests } from './Board_spec.js'
 // Wrap test to handle Playwright's destructuring requirement
 const wrappedTest = (name: string, fn: (fixtures: any) => Promise<void>) => {
   test(name, async ({ mount, page }) => {
-    // Wrap mount to render JSX for the component
+    // Wrap mount to render JSX for the component by name
     const wrappedMount = (componentName: string) => {
       if (componentName === 'Board') {
         return mount(<Board />)
       }
       throw new Error(`Unknown component: ${componentName}`)
     }
-    return fn({ mount: wrappedMount, page })
+    // Direct mount for React elements - this is the key test!
+    // Playwright requires JSX syntax, so we pass the element through
+    const mountElement = (element: React.ReactElement) => {
+      return mount(element)
+    }
+    return fn({ mount: wrappedMount, mount_element: mountElement, page })
   })
 }
 

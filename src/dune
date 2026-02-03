@@ -1,10 +1,82 @@
+(library
+ (name packaday)
+ (public_name packaday)
+ (modes melange)
+ (libraries reason-react melange-fest)
+ (preprocess (pps melange.ppx reason-react-ppx)))
+
 (melange.emit
  (target output)
- (promote (until-clean))
  (alias app)
- (libraries reason-react melange-fest)
- (preprocess (pps melange.ppx reason-react-ppx))
- (module_systems esm))
+ (libraries packaday)
+ (module_systems esm)
+ (modules))
+
+; Promote library JS files to src/ for Vite compatibility
+(rule
+ (deps output/node_modules/packaday/App.js)
+ (target App.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Board.js)
+ (target Board.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Fun.js)
+ (target Fun.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Game.js)
+ (target Game.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Geometry.js)
+ (target Geometry.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Hooks.js)
+ (target Hooks.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Main.js)
+ (target Main.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Piece.js)
+ (target Piece.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Shape.js)
+ (target Shape.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (deps output/node_modules/packaday/Test_inline.js)
+ (target Test_inline.js)
+ (mode (promote (until-clean)))
+ (action (copy %{deps} %{target})))
+
+(rule
+ (alias app)
+ (deps App.js Board.js Fun.js Game.js Geometry.js Hooks.js Main.js Piece.js Shape.js Test_inline.js)
+ (action (progn)))
 
 (rule
  (alias runtest)
@@ -12,4 +84,4 @@
   (alias app))
  (action
   (setenv NODE_TEST 1
-   (bash "grep -l Melange__Test output/src/*.js | xargs node --test"))))
+   (bash "grep -l Melange__Test_inline *.js | xargs node --test"))))
