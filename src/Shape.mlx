@@ -98,28 +98,21 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
 let rotate_cw t =
   let rows = Array.length t in
   let cols = if rows > 0 then Array.length t.(0) else 0 in
-  Array.init cols (fun new_row ->
-    Array.init rows (fun new_col ->
-      t.(rows - 1 - new_col).(new_row)
-  ))
+  Array.init_matrix cols rows @@ fun row col -> t.(rows - col - 1).(row)
 
 let rotate_ccw t =
   let rows = Array.length t in
   let cols = if rows > 0 then Array.length t.(0) else 0 in
-  Array.init cols (fun new_row ->
-    Array.init rows (fun new_col ->
-      t.(new_col).(cols - 1 - new_row)
-  ))
+  Array.init_matrix cols rows @@ fun row col -> t.(col).(cols - row - 1)
 
-let flip_horiz t =
-  Array.map (fun row ->
+let flip_horiz =
+  Array.map @@ fun row ->
     let len = Array.length row in
-    Array.init len (fun i -> row.(len - 1 - i))
-  ) t
+    Array.init len @@ fun i -> row.(len - i - 1)
 
 let flip_vert t =
   let len = Array.length t in
-  Array.init len (fun i -> t.(len - 1 - i))
+  Array.init len @@ fun i -> t.(len - i - 1)
 
 let all_transformations (t : t) : t array =
   let r1 = rotate_cw t in
