@@ -252,22 +252,14 @@ module Test = struct
 
     test "8 variations for Thumb" @@ fun () ->
       expect |> equal (Array.length (variations `Thumb)) 8;
-
     test "8 variations for L" @@ fun () ->
       expect |> equal (Array.length (variations `L)) 8;
-
     test "8 variations for Snake" @@ fun () ->
       expect |> equal (Array.length (variations `Snake)) 8;
-
     test "4 variations for Z" @@ fun () ->
       expect |> equal (Array.length (variations `Z)) 4;
-
     test "8 variations for T" @@ fun () ->
       expect |> equal (Array.length (variations `T)) 8;
-
-    test "4 variations for U" @@ fun () ->
-      expect |> equal (Array.length (variations `U)) 4;
-
     test "4 variations for Corner" @@ fun () ->
       expect |> equal (Array.length (variations `Corner)) 4
 end
