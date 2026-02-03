@@ -21,72 +21,72 @@ const months = [
 function run_tests(helpers) {
   helpers.describe("Board Component", (function (param) {
           helpers.test("renders board", (function (fixtures) {
-                  return fixtures.mount(helpers.board).then(function (component) {
-                              return Melange__Playwright.to_be_visible(helpers.expect(component));
-                            });
+                  return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
+                                return Melange__Playwright.to_be_visible(helpers.expect(component));
+                              }));
                 }));
           helpers.test("month tiles display correctly", (function (fixtures) {
-                  return fixtures.mount(helpers.board).then(function (component) {
-                              const check_month = function (i) {
-                                const month = Caml_array.get(months, i);
-                                const el = Melange__Playwright.get_by_text_opt(component, month, Melange__Playwright.get_by_text_options(true, undefined));
-                                return Melange__Playwright.to_be_visible(helpers.expect(el));
-                              };
-                              return check_month(0).then(function (param) {
-                                                              return check_month(1);
-                                                            }).then(function (param) {
-                                                            return check_month(2);
-                                                          }).then(function (param) {
-                                                          return check_month(3);
-                                                        }).then(function (param) {
-                                                        return check_month(4);
-                                                      }).then(function (param) {
-                                                      return check_month(5);
-                                                    }).then(function (param) {
-                                                    return check_month(6);
-                                                  }).then(function (param) {
-                                                  return check_month(7);
-                                                }).then(function (param) {
-                                                return check_month(8);
-                                              }).then(function (param) {
-                                              return check_month(9);
-                                            }).then(function (param) {
-                                            return check_month(10);
-                                          }).then(function (param) {
-                                          return check_month(11);
-                                        });
-                            });
+                  return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
+                                const check_month = function (i) {
+                                  const month = Caml_array.get(months, i);
+                                  const el = Melange__Playwright.get_by_text_opt(component, month, Melange__Playwright.get_by_text_options(true, undefined));
+                                  return Melange__Playwright.to_be_visible(helpers.expect(el));
+                                };
+                                return Melange__Playwright.let$great(check_month(0), (function (param) {
+                                              return Melange__Playwright.let$great(check_month(1), (function (param) {
+                                                            return Melange__Playwright.let$great(check_month(2), (function (param) {
+                                                                          return Melange__Playwright.let$great(check_month(3), (function (param) {
+                                                                                        return Melange__Playwright.let$great(check_month(4), (function (param) {
+                                                                                                      return Melange__Playwright.let$great(check_month(5), (function (param) {
+                                                                                                                    return Melange__Playwright.let$great(check_month(6), (function (param) {
+                                                                                                                                  return Melange__Playwright.let$great(check_month(7), (function (param) {
+                                                                                                                                                return Melange__Playwright.let$great(check_month(8), (function (param) {
+                                                                                                                                                              return Melange__Playwright.let$great(check_month(9), (function (param) {
+                                                                                                                                                                            return Melange__Playwright.let$great(check_month(10), (function (param) {
+                                                                                                                                                                                          return check_month(11);
+                                                                                                                                                                                        }));
+                                                                                                                                                                          }));
+                                                                                                                                                            }));
+                                                                                                                                              }));
+                                                                                                                                }));
+                                                                                                                  }));
+                                                                                                    }));
+                                                                                      }));
+                                                                        }));
+                                                          }));
+                                            }));
+                              }));
                 }));
           helpers.test("day tiles display correctly", (function (fixtures) {
-                  return fixtures.mount(helpers.board).then(function (component) {
-                              const check_days = function (day) {
-                                if (day > 31) {
-                                  return Promise.resolve(undefined);
-                                }
-                                const el = Melange__Playwright.get_by_text_opt(component, String(day), Melange__Playwright.get_by_text_options(true, undefined));
-                                return Melange__Playwright.to_be_visible(helpers.expect(el)).then(function (param) {
-                                            return check_days(day + 1 | 0);
-                                          });
-                              };
-                              return check_days(1);
-                            });
+                  return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
+                                const check_days = function (day) {
+                                  if (day > 31) {
+                                    return Promise.resolve(undefined);
+                                  }
+                                  const el = Melange__Playwright.get_by_text_opt(component, String(day), Melange__Playwright.get_by_text_options(true, undefined));
+                                  return Melange__Playwright.let$great(Melange__Playwright.to_be_visible(helpers.expect(el)), (function (param) {
+                                                return check_days(day + 1 | 0);
+                                              }));
+                                };
+                                return check_days(1);
+                              }));
                 }));
           helpers.test("correct total tile count", (function (fixtures) {
-                  return fixtures.mount(helpers.board).then(function (component) {
-                              const tiles = Melange__Playwright.locator_(component, ".tile");
-                              return Melange__Playwright.to_have_count(helpers.expect(tiles), 43);
-                            });
+                  return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
+                                const tiles = Melange__Playwright.locator_(component, ".tile");
+                                return Melange__Playwright.to_have_count(helpers.expect(tiles), 43);
+                              }));
                 }));
           helpers.test("visual snapshot", (function (fixtures) {
-                  return fixtures.mount(helpers.board).then(function (component) {
-                              const jan = Melange__Playwright.get_by_text(component, "Jan");
-                              return Melange__Playwright.to_be_visible(helpers.expect(jan)).then(function (param) {
-                                            const day31 = Melange__Playwright.get_by_text_opt(component, "31", Melange__Playwright.get_by_text_options(true, undefined));
-                                            return Melange__Playwright.to_be_visible(helpers.expect(day31));
-                                          }).then(function (param) {
-                                          return Melange__Playwright.to_have_screenshot(helpers.expect(component), "board.png");
-                                        });
-                            });
+                  return Melange__Playwright.let$great(fixtures.mount(helpers.board), (function (component) {
+                                const jan = Melange__Playwright.get_by_text(component, "Jan");
+                                return Melange__Playwright.let$great(Melange__Playwright.to_be_visible(helpers.expect(jan)), (function (param) {
+                                              const day31 = Melange__Playwright.get_by_text_opt(component, "31", Melange__Playwright.get_by_text_options(true, undefined));
+                                              return Melange__Playwright.let$great(Melange__Playwright.to_be_visible(helpers.expect(day31)), (function (param) {
+                                                            return Melange__Playwright.to_have_screenshot(helpers.expect(component), "board.png");
+                                                          }));
+                                            }));
+                              }));
                 }));
         }));
 }

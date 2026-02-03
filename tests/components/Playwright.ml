@@ -1,5 +1,8 @@
 (* Playwright bindings for component testing *)
 
+(* Promise let-binding for cleaner async code *)
+let (let>) f g = Js.Promise.then_ g f
+
 type locator
 type locator_assertions
 type page
