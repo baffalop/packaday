@@ -1,4 +1,4 @@
-open Prelude
+open Fun
 
 module PieceSelectPanel = struct
   let[@react.component] make ~onPieceSelect () =

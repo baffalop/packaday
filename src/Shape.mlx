@@ -1,4 +1,4 @@
-open Prelude
+open Fun
 
 type piece = [
   | `Rect
