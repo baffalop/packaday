@@ -18,7 +18,9 @@
       "Bash(pnpm test:ct:*)",
       "Bash(opam list:*)",
       "Bash(pnpm build:*)",
-      "Bash(pnpm test:snap:*)"
+      "Bash(pnpm test:snap:*)",
+      "Bash(dune runtest:*)",
+      "Bash(dune build:*)"
     ]
   }
 }

@@ -22,6 +22,8 @@ val rotate_ccw : t -> t
 val flip_horiz : t -> t
 val flip_vert : t -> t
 
+val variations : piece -> t array
+
 val makeProps :
   t:t ->
   ?cellSize:int ->

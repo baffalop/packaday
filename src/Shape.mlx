@@ -1,3 +1,5 @@
+open Prelude
+
 type piece = [
   | `Rect
   | `Thumb
@@ -63,34 +65,6 @@ let of_piece : piece -> t = function
 
 let string_of_piece = [%mel.raw {|tag => tag|}]
 
-let rotate_cw t =
-  let rows = Array.length t in
-  let cols = if rows > 0 then Array.length t.(0) else 0 in
-  Array.init cols (fun new_row ->
-    Array.init rows (fun new_col ->
-      t.(rows - 1 - new_col).(new_row)
-    )
-  )
-
-let rotate_ccw t =
-  let rows = Array.length t in
-  let cols = if rows > 0 then Array.length t.(0) else 0 in
-  Array.init cols (fun new_row ->
-    Array.init rows (fun new_col ->
-      t.(new_col).(cols - 1 - new_row)
-    )
-  )
-
-let flip_horiz t =
-  Array.map (fun row ->
-    let len = Array.length row in
-    Array.init len (fun i -> row.(len - 1 - i))
-  ) t
-
-let flip_vert t =
-  let len = Array.length t in
-  Array.init len (fun i -> t.(len - 1 - i))
-
 let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500") () =
   let rows = Array.length t in
   let cols = if rows > 0 then Array.length t.(0) else 0 in
@@ -120,6 +94,51 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
       ) |> React.array
     ) |> React.array)
   </svg>
+
+let rotate_cw t =
+  let rows = Array.length t in
+  let cols = if rows > 0 then Array.length t.(0) else 0 in
+  Array.init cols (fun new_row ->
+    Array.init rows (fun new_col ->
+      t.(rows - 1 - new_col).(new_row)
+  ))
+
+let rotate_ccw t =
+  let rows = Array.length t in
+  let cols = if rows > 0 then Array.length t.(0) else 0 in
+  Array.init cols (fun new_row ->
+    Array.init rows (fun new_col ->
+      t.(new_col).(cols - 1 - new_row)
+  ))
+
+let flip_horiz t =
+  Array.map (fun row ->
+    let len = Array.length row in
+    Array.init len (fun i -> row.(len - 1 - i))
+  ) t
+
+let flip_vert t =
+  let len = Array.length t in
+  Array.init len (fun i -> t.(len - 1 - i))
+
+let all_transformations (t : t) : t array =
+  let r1 = rotate_cw t in
+  let r2 = rotate_cw r1 in
+  let r3 = rotate_cw r2 in
+  let f = flip_horiz t in
+  let fr1 = rotate_cw f in
+  let fr2 = rotate_cw fr1 in
+  let fr3 = rotate_cw fr2 in
+  [|t; r1; r2; r3; f; fr1; fr2; fr3|]
+
+let unique_variations (t : t) : t array =
+  all_transformations t
+  |> Array.fold_left (fun acc shape ->
+    if Array.exists (fun s -> s = shape) acc then acc
+    else Array.append acc [|shape|]
+  ) [||]
+
+let variations : piece -> t array = unique_variations << of_piece
 
 module Test = struct
   open Fest
@@ -194,5 +213,61 @@ module Test = struct
           [| O; H |];
           [| H; H |];
           [| H; O |];
-        |]
+        |];
+
+    test "variations for Rect" @@ fun () ->
+      expect |> deep_equal (variations `Rect) [|
+        [|
+          [| H; H; |];
+          [| H; H; |];
+          [| H; H; |];
+        |];
+        [|
+          [| H; H; H; |];
+          [| H; H; H; |];
+        |];
+      |];
+
+    test "variations for U" @@ fun () ->
+      expect |> deep_equal (variations `U) [|
+        [|
+          [| H; H; |];
+          [| O; H; |];
+          [| H; H; |];
+        |];
+        [|
+          [| H; O; H |];
+          [| H; H; H |];
+        |];
+        [|
+          [| H; H; |];
+          [| H; O; |];
+          [| H; H; |];
+        |];
+        [|
+          [| H; H; H |];
+          [| H; O; H |];
+        |];
+      |];
+
+    test "8 variations for Thumb" @@ fun () ->
+      expect |> equal (Array.length (variations `Thumb)) 8;
+
+    test "8 variations for L" @@ fun () ->
+      expect |> equal (Array.length (variations `L)) 8;
+
+    test "8 variations for Snake" @@ fun () ->
+      expect |> equal (Array.length (variations `Snake)) 8;
+
+    test "4 variations for Z" @@ fun () ->
+      expect |> equal (Array.length (variations `Z)) 4;
+
+    test "8 variations for T" @@ fun () ->
+      expect |> equal (Array.length (variations `T)) 8;
+
+    test "4 variations for U" @@ fun () ->
+      expect |> equal (Array.length (variations `U)) 4;
+
+    test "4 variations for Corner" @@ fun () ->
+      expect |> equal (Array.length (variations `Corner)) 4
 end
