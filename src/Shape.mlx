@@ -124,14 +124,14 @@ let all_transformations (t : t) : t array =
   let fr3 = rotate_cw fr2 in
   [|t; r1; r2; r3; f; fr1; fr2; fr3|]
 
-let unique_variations (t : t) : t array =
-  all_transformations t
-  |> Array.fold_left (fun acc shape ->
-    if Array.exists (fun s -> s = shape) acc then acc
+let unique : 'a array -> 'a array =
+  Array.fold_left (fun acc shape ->
+    if Array.mem shape acc then acc
     else Array.append acc [|shape|]
   ) [||]
 
-let variations : piece -> t array = unique_variations << of_piece
+let variations : piece -> t array =
+  unique << all_transformations << of_piece
 
 module Test = struct
   open Fest
