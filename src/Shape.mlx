@@ -76,15 +76,15 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
     viewBox=(Printf.sprintf "0 0 %d %d" width height)
     className="piece-shape"
   >
-    (t |> Array.mapi (fun row_idx row ->
-      row |> Array.mapi (fun col_idx seg ->
+    (t |> Array.mapi (fun row_i row ->
+      row |> Array.mapi (fun col_i seg ->
         match seg with
         | O -> React.null
         | H ->
-          let x = col_idx * cellSize in
-          let y = row_idx * cellSize in
+          let x = col_i * cellSize in
+          let y = row_i * cellSize in
           <rect
-            key=(Printf.sprintf "%d-%d" row_idx col_idx)
+            key=(Printf.sprintf "%d-%d" row_i col_i)
             x=(string_of_int x)
             y=(string_of_int y)
             width=(string_of_int cellSize)
