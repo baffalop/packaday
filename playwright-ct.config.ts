@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   testDir: './tests/components',
+  testMatch: '**/*.spec.tsx',
   snapshotDir: './__snapshots__',
   timeout: 60000, // Extended timeout for OCaml compilation
   fullyParallel: true,

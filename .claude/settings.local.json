@@ -20,7 +20,8 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm test:snap:*)",
       "Bash(dune runtest:*)",
-      "Bash(dune build:*)"
+      "Bash(dune build:*)",
+      "mcp__acp__Write"
     ]
   }
 }
