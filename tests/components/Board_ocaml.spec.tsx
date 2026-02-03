@@ -25,6 +25,7 @@ const testHelpers = {
   board: 'Board', // Pass component name, not the component itself
   test: wrappedTest,
   expect,
+  describe: test.describe,
 }
 
 run_tests(testHelpers)
