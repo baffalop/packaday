@@ -259,20 +259,61 @@ none of the design choices above preclude it.
 
 ## 7. Test plan
 
-OCaml-side tests (Fest):
+Three layers, matching the project's existing setup
+(`pnpm test:dune`, `pnpm test:ct`, `pnpm test:e2e`).
 
-- Shape: `anchor`, `cells`, "exactly one X" invariant across all pieces,
-  rotation preserves `X`.
+### 7.1 Dune / Fest (OCaml unit tests)
 
-Component-level checks (visual / manual for this iteration):
+In `Shape.Test`:
 
-- Selecting a piece, hovering the board: the cell directly under the
-  cursor highlights; the floating ghost's anchor cell sits over the same
-  cell.
-- Moving between tiles: highlight follows.
-- Cursor leaves the board: highlight clears.
-- Selecting nothing (or after click-cancel): no highlight even when
-  hovering the board.
-- Visual snapshot of the new Shape SVG output (anchor-aware viewBox).
+- `anchor` returns the right `(row, col)` for at least `Thumb`, `L`, `Z`
+  (asymmetric, so distinguishable from arbitrary defaults).
+- `cells` returns the expected offset list, including `(0, 0)`.
+- "Exactly one X" invariant across all pieces (iterate over the full
+  piece list, count `X` cells).
+- Rotation preserves the presence of `X` in the rotated matrix
+  (`Array.exists ... = X` after `rotate_cw`, `flip_horiz`, etc.).
 
-`pnpm build` and `pnpm test`/`pnpm test:snap` per project conventions.
+### 7.2 Component tests (Playwright CT — `tests/components/`)
+
+- **`Shape.spec.tsx`** — likely no logic changes needed. The
+  anchor-aware viewBox shifts the internal origin but bbox `width`/`height`
+  are unchanged, and rect positions relative to the SVG's outer box are
+  unchanged. Existing dimension assertions (`width=16`, `height=24` for
+  `Rect` at `cellSize=8`) and per-piece visual snapshots should hold. If
+  they don't, regenerate.
+- **`Board.spec.tsx`** — add:
+  - `onCellHover` is called with the right `(row, col)` when a tile
+    receives `mouseEnter`.
+  - `onCellHover(None)` is called when the cursor leaves the board
+    container.
+  - When `highlight = Some (shape, (r, c))`, the tile at `(r, c)` has
+    the highlighted class; others don't.
+  - Default rendering (no `highlight` prop) matches the existing
+    snapshot — no visual regression.
+- **`PieceFloating.spec.tsx`** — the existing `left`/`top` assertions
+  still hold (anchor-on-cursor still means `left=cursorX, top=cursorY`).
+  The visual snapshot (`floating-snake.png`) **will** change because the
+  outer transform shifts from bbox-half to cell-half. Add a `transform`
+  assertion (`translate(-33px, -33px)` for `cellSize=66`) so the change
+  is captured behaviourally as well as visually.
+
+### 7.3 E2E (Playwright — `tests/e2e/piece-interaction.spec.ts`)
+
+- Extend the existing "follows mouse" test to also assert no highlight
+  appears outside the board (e.g. the cursor at `(50, 50)` over the page
+  background).
+- New test: select a piece, move the cursor over a known tile, assert
+  the tile has the highlighted class. Move to another tile, assert the
+  highlight moves with it. Move outside the board, assert the highlight
+  disappears.
+- New test: without any piece selected, hovering board tiles produces
+  no highlight on any tile.
+- Existing visual snapshots for the floating piece **will** change for
+  the same translate reason as above — regenerate via `pnpm test:snap`.
+
+### 7.4 Verification
+
+Per `CLAUDE.md`: run `pnpm build` for type/diagnostics, then `pnpm test`
+(which runs all three layers), and `pnpm test:snap` to regenerate the
+two known-changing snapshots once their new output looks right.
