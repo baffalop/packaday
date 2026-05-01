@@ -10,7 +10,7 @@ module PieceSelectPanel = struct
 end
 
 let[@react.component] make () =
-  let (selected, setSelected) = React.useState (fun () -> None) in
+  let (selected, setSelected) = React.useState @@ Fn.const None in
 
   let handleClickAnywhere _ = setSelected @@ Fn.const None in
 
