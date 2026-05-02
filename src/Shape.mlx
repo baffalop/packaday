@@ -11,55 +11,55 @@ type piece = [
   | `Z
 ]
 
-(** A single cell: O (empty/gap) or H (filled) *)
 type segment =
-  | O
-  | H
+  | O (* empty *)
+  | H (* filled *)
+  | X (* filled – anchor point *)
 
 type t = segment array array
 
 let of_piece : piece -> t = function
   | `Rect -> [|
     [| H; H |];
-    [| H; H |];
+    [| X; H |];
     [| H; H |];
   |]
   | `Thumb -> [|
     [| O; H |];
-    [| H; H |];
+    [| H; X |];
     [| H; H |];
   |]
   | `Corner -> [|
-    [| H; H; H |];
+    [| H; H; X |];
     [| O; O; H |];
     [| O; O; H |];
   |]
   | `L -> [|
     [| H; H |];
-    [| H; O |];
+    [| X; O |];
     [| H; O |];
     [| H; O |];
   |]
   | `Snake -> [|
     [| H; O |];
-    [| H; H |];
+    [| H; X |];
     [| O; H |];
     [| O; H |];
   |]
   | `T -> [|
     [| H; O |];
-    [| H; H |];
+    [| X; H |];
     [| H; O |];
     [| H; O |];
   |]
   | `U -> [|
     [| H; H |];
-    [| O; H |];
+    [| O; X |];
     [| H; H |];
   |]
   | `Z -> [|
     [| H; H; O |];
-    [| O; H; O |];
+    [| O; X; O |];
     [| O; H; H |];
   |]
 
@@ -80,7 +80,7 @@ let[@react.component] make ~(t : t) ?(cellSize = 8) ?(className = "fill-rose-500
       row |> Array.mapi (fun col_i seg ->
         match seg with
         | O -> React.null
-        | H ->
+        | H | X ->
           let x = col_i * cellSize in
           let y = row_i * cellSize in
           <rect
@@ -124,14 +124,20 @@ let all_transformations (t : t) : t array =
   let fr3 = rotate_cw fr2 in
   [|t; r1; r2; r3; f; fr1; fr2; fr3|]
 
-let unique : 'a array -> 'a array =
-  Array.fold_left (fun acc shape ->
-    if Array.mem shape acc then acc
-    else Array.append acc [|shape|]
+let unique_by (key: 'a -> 'b) : 'a array -> 'a array =
+  Array.fold_left (fun acc x ->
+    let keyed = key x in
+    if Array.exists (fun (_, k) -> k = keyed) acc then acc
+    else Array.append acc [|(x, keyed)|]
   ) [||]
+  >> Array.map fst
+
+(** Strip anchor info, replacing X with H. Used for shape-only equality. *)
+let unanchored : t -> t =
+  Array.map @@ Array.map @@ function X -> H | s -> s
 
 let variations : piece -> t array =
-  unique << all_transformations << of_piece
+  unique_by unanchored << all_transformations << of_piece
 
 module Test = struct
   open Fest
@@ -141,33 +147,33 @@ module Test = struct
       expect |> deep_equal (of_piece `Thumb)
         [|
           [| O; H |];
-          [| H; H |];
+          [| H; X |];
           [| H; H |];
         |];
     test "rotate_cw Thumb" @@ fun () ->
       expect |> deep_equal (rotate_cw @@ of_piece `Thumb)
         [|
           [| H; H; O |];
-          [| H; H; H |];
+          [| H; X; H |];
         |];
     test "rotate_ccw Thumb" @@ fun () ->
       expect |> deep_equal (rotate_ccw @@ of_piece `Thumb)
         [|
-          [| H; H; H |];
+          [| H; X; H |];
           [| O; H; H |];
         |];
     test "flip_horiz Thumb" @@ fun () ->
       expect |> deep_equal (flip_horiz @@ of_piece `Thumb)
         [|
           [| H; O |];
-          [| H; H |];
+          [| X; H |];
           [| H; H |];
         |];
     test "flip_vert Thumb" @@ fun () ->
       expect |> deep_equal (flip_vert @@ of_piece `Thumb)
         [|
           [| H; H |];
-          [| H; H |];
+          [| H; X |];
           [| O; H |];
         |];
 
@@ -175,7 +181,7 @@ module Test = struct
       expect |> deep_equal (of_piece `Snake)
         [|
           [| H; O |];
-          [| H; H |];
+          [| H; X |];
           [| O; H |];
           [| O; H |];
         |];
@@ -183,19 +189,19 @@ module Test = struct
       expect |> deep_equal (rotate_cw @@ of_piece `Snake)
         [|
           [| O; O; H; H |];
-          [| H; H; H; O |];
+          [| H; H; X; O |];
         |];
     test "rotate_ccw Snake" @@ fun () ->
       expect |> deep_equal (rotate_ccw @@ of_piece `Snake)
         [|
-          [| O; H; H; H |];
+          [| O; X; H; H |];
           [| H; H; O; O |];
         |];
     test "flip_horiz Snake" @@ fun () ->
       expect |> deep_equal (flip_horiz @@ of_piece `Snake)
         [|
           [| O; H |];
-          [| H; H |];
+          [| X; H |];
           [| H; O |];
           [| H; O |];
         |];
@@ -204,7 +210,7 @@ module Test = struct
         [|
           [| O; H |];
           [| O; H |];
-          [| H; H |];
+          [| H; X |];
           [| H; O |];
         |];
 
@@ -212,11 +218,11 @@ module Test = struct
       expect |> deep_equal (variations `Rect) [|
         [|
           [| H; H; |];
-          [| H; H; |];
+          [| X; H; |];
           [| H; H; |];
         |];
         [|
-          [| H; H; H; |];
+          [| H; X; H; |];
           [| H; H; H; |];
         |];
       |];
@@ -225,20 +231,20 @@ module Test = struct
       expect |> deep_equal (variations `U) [|
         [|
           [| H; H; |];
-          [| O; H; |];
+          [| O; X; |];
           [| H; H; |];
         |];
         [|
           [| H; O; H |];
-          [| H; H; H |];
+          [| H; X; H |];
         |];
         [|
           [| H; H; |];
-          [| H; O; |];
+          [| X; O; |];
           [| H; H; |];
         |];
         [|
-          [| H; H; H |];
+          [| H; X; H |];
           [| H; O; H |];
         |];
       |];
