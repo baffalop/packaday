@@ -15,6 +15,13 @@ type t
 
 val of_piece : piece -> t
 
+val anchor : t -> int * int
+(** [(row, col)] of the X cell. Raises if absent. *)
+
+val cells : t -> (int * int) list
+(** Offsets [(dx, dy)] from the anchor for every filled cell, including
+    the anchor itself at [(0, 0)]. *)
+
 val string_of_piece : piece -> string
 
 val rotate_cw : t -> t

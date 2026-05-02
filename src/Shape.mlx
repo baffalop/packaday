@@ -124,6 +124,31 @@ let all_transformations (t : t) : t array =
   let fr3 = rotate_cw fr2 in
   [|t; r1; r2; r3; f; fr1; fr2; fr3|]
 
+exception Found_anchor of (int * int)
+
+let anchor (t : t) : int * int =
+  try
+    Array.iteri (fun row_i row ->
+      Array.iteri (fun col_i seg ->
+        if seg = X then raise (Found_anchor (row_i, col_i))
+      ) row
+    ) t;
+    failwith "Shape.anchor: no X cell"
+  with Found_anchor pos -> pos
+
+let cells (t : t) : (int * int) list =
+  let (anchor_row, anchor_col) = anchor t in
+  let acc = ref [] in
+  Array.iteri (fun row_i row ->
+    Array.iteri (fun col_i seg ->
+      match seg with
+      | O -> ()
+      | H | X ->
+        acc := (col_i - anchor_col, row_i - anchor_row) :: !acc
+    ) row
+  ) t;
+  !acc
+
 let unique_by (key: 'a -> 'b) : 'a array -> 'a array =
   Array.fold_left (fun acc x ->
     let keyed = key x in
@@ -213,6 +238,43 @@ module Test = struct
           [| H; X |];
           [| H; O |];
         |];
+
+    test "anchor Thumb" @@ fun () ->
+      expect |> deep_equal (anchor @@ of_piece `Thumb) (1, 1);
+    test "anchor L" @@ fun () ->
+      expect |> deep_equal (anchor @@ of_piece `L) (1, 0);
+    test "anchor Z" @@ fun () ->
+      expect |> deep_equal (anchor @@ of_piece `Z) (1, 1);
+
+    test "cells Snake" @@ fun () ->
+      let actual = cells (of_piece `Snake) |> List.sort compare in
+      let expected = List.sort compare [
+        (* Snake with X at (row=1, col=1). Offsets are (col - anchor_col, row - anchor_row): *)
+        (-1, -1);  (* row 0, col 0 *)
+        (-1,  0);  (* row 1, col 0 *)
+        ( 0,  0);  (* row 1, col 1 — the X itself *)
+        ( 0,  1);  (* row 2, col 1 *)
+        ( 0,  2);  (* row 3, col 1 *)
+      ] in
+      expect |> deep_equal actual expected;
+
+    test "cells contains anchor at origin" @@ fun () ->
+      let pieces = [`Rect; `Thumb; `Corner; `L; `Snake; `T; `U; `Z] in
+      pieces |> List.iter (fun p ->
+        expect |> equal (List.mem (0, 0) (cells (of_piece p))) true
+      );
+
+    test "exactly one X per piece" @@ fun () ->
+      let pieces = [`Rect; `Thumb; `Corner; `L; `Snake; `T; `U; `Z] in
+      pieces |> List.iter (fun p ->
+        let count = of_piece p
+          |> Array.to_list
+          |> List.concat_map Array.to_list
+          |> List.filter (fun s -> s = X)
+          |> List.length
+        in
+        expect |> equal count 1
+      );
 
     test "variations for Rect" @@ fun () ->
       expect |> deep_equal (variations `Rect) [|

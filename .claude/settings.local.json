@@ -24,7 +24,8 @@
       "Bash(pnpm build:tests:*)",
       "WebFetch(domain:playwright.dev)",
       "Bash(opam exec -- dune clean:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(pnpm test:dune)"
     ]
   }
 }
