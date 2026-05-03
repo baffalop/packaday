@@ -25,7 +25,8 @@
       "WebFetch(domain:playwright.dev)",
       "Bash(opam exec -- dune clean:*)",
       "Bash(ls:*)",
-      "Bash(pnpm test:dune)"
+      "Bash(pnpm test:dune)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
