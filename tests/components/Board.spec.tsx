@@ -1,9 +1,33 @@
 import { test, expect, MountResult } from '@playwright/experimental-ct-react'
+import type { Locator } from '@playwright/test'
 import { Board } from './wrappers'
 
 test.describe('Board Component', () => {
+  const highlightClass = /bg-amber-600/
+  const highlightNoneClass = /bg-amber-900/
+
   function getTileByLabel (component: MountResult, label: string) {
     return component.getByText(label, { exact: true }).locator('..')
+  }
+
+  async function expectHighlighted (tile: Locator) {
+    await expect(tile).toHaveClass(highlightClass)
+  }
+
+  async function expectNotHighlighted (tile: Locator) {
+    await expect(tile).toHaveClass(highlightNoneClass)
+  }
+
+  async function expectTilesHighlighted (component: MountResult, tiles: (number | string)[]) {
+    for (const tile of tiles) {
+      await expectHighlighted(getTileByLabel(component, `${tile}`))
+    }
+  }
+
+  async function expectTilesNotHighlighted (component: MountResult, tiles: (number | string)[]) {
+    for (const tile of tiles) {
+      await expectNotHighlighted(getTileByLabel(component, `${tile}`))
+    }
   }
 
   test('renders board', async ({ mount }) => {
@@ -91,18 +115,29 @@ test.describe('Board Component', () => {
     expect(calls.at(-1)).toBeNull()
   })
 
-  test('highlight prop highlights only the matching tile', async ({ mount }) => {
+  test('highlight projects piece cells onto matching tiles', async ({ mount }) => {
     // @ts-expect-error Melange output has no type declarations
     const { of_piece } = await import('../../src/Shape.js')
-    // Sep is tile 8 (Jan=0..Jun=5, Jul=6, Aug=7, Sep=8).
+    // Rect anchored on Sep (tile 8 → row 1, col 2). The 2×3 Rect projects to
+    // Mar, Apr, Sep, Oct, day 3, day 4 — all within the board.
     const component = await mount(
       <Board highlight={[of_piece('Rect'), 8]} />,
     )
 
-    await expect(getTileByLabel(component, 'Sep')).toHaveClass(/bg-amber-600/)
+    await expectTilesHighlighted(component, ['Mar', 'Apr', 'Sep', 'Oct', 3, 4])
+    await expectTilesNotHighlighted(component, ['Jan', 'Feb', 'May', 'Aug', 'Nov', 5])
+  })
 
-    for (const tile of ['Jan', 'Mar', 'Aug', 'Oct']) {
-      await expect(getTileByLabel(component, tile)).toHaveClass(/bg-amber-900/)
-    }
+  test('highlight skips cells projected off the board', async ({ mount }) => {
+    // @ts-expect-error Melange output has no type declarations
+    const { of_piece } = await import('../../src/Shape.js')
+    // Rect anchored on Jan (tile 0 → row 0, col 0). The two cells above the
+    // anchor row land at row -1; only Jan, Feb, Jul, Aug remain on-board.
+    const component = await mount(
+      <Board highlight={[of_piece('Rect'), 0]} />,
+    )
+
+    await expectTilesHighlighted(component, ['Jan', 'Feb', 'Jul', 'Aug'])
+    await expectTilesNotHighlighted(component, ['Mar', 'Sep', 1])
   })
 })

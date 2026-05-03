@@ -24,12 +24,35 @@ end
 
 let months = [| "Jan"; "Feb"; "Mar"; "Apr"; "May"; "Jun"; "Jul"; "Aug"; "Sep"; "Oct"; "Nov"; "Dec" |]
 
+(** Tile index → (row, col) on the 7-wide grid the board visually occupies. *)
+let coords_of_index = function
+  | i when i < 6  -> (0, i)
+  | i when i < 12 -> (1, i - 6)
+  | i when i < 40 -> let i = i - 12 in (2 + i / 7, i mod 7)
+  | i when i < 43 -> (6, i - 40)
+  | i -> failwith @@ Printf.sprintf "Board.coords_of_index: %d out of range" i
+
+(** (row, col) → Some tile if on the board, None if in a gap or off-grid. *)
+let index_of_coords = function
+  | 0, c when c >= 0 && c < 6 -> Some c
+  | 1, c when c >= 0 && c < 6 -> Some (6 + c)
+  | r, c when r >= 2 && r <= 5 && c >= 0 && c < 7 -> Some (12 + (r - 2) * 7 + c)
+  | 6, c when c >= 0 && c < 3 -> Some (40 + c)
+  | _ -> None
+
 let[@react.component] make
     ?(onCellHover = fun _ -> ())
     ?(highlight = None)
     () =
-  let highlighted_tile = Option.map snd highlight in
-  let is_highlighted tile = highlighted_tile = Some tile in
+  let highlighted_tiles = match highlight with
+    | None -> []
+    | Some (shape, anchor) ->
+      let (anchor_row, anchor_col) = coords_of_index anchor in
+      Shape.cells shape
+      |> List.filter_map (fun (dx, dy) ->
+        index_of_coords (anchor_row + dy, anchor_col + dx))
+  in
+  let is_highlighted tile = List.mem tile highlighted_tiles in
 
   let onTileEnter tile () = onCellHover (Some tile) in
 

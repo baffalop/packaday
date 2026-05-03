@@ -1,9 +1,37 @@
 import { test, expect } from './setup'
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 test.describe('Piece Interaction', () => {
+  const highlightClass = /bg-amber-600/
+  const highlightNoneClass = /bg-amber-900/
+  const highlightClassSelector = `.${highlightClass}`.replaceAll('/', '')
+
   function getTileByLabel (page: Page, label: string) {
     return page.getByText(label, { exact: true }).locator('..')
+  }
+
+  async function expectHighlighted (tile: Locator) {
+    await expect(tile).toHaveClass(highlightClass)
+  }
+
+  async function expectNotHighlighted (tile: Locator) {
+    await expect(tile).toHaveClass(highlightNoneClass)
+  }
+
+  async function expectTilesHighlighted (page: Page, tiles: (number | string)[]) {
+    for (const tile of tiles) {
+      await expectHighlighted(getTileByLabel(page, `${tile}`))
+    }
+  }
+
+  async function expectTilesNotHighlighted (page: Page, tiles: (number | string)[]) {
+    for (const tile of tiles) {
+      await expectNotHighlighted(getTileByLabel(page, `${tile}`))
+    }
+  }
+
+  async function expectNoHighlights (page: Page) {
+    await expect(page.locator(highlightClassSelector)).toHaveCount(0)
   }
 
   test('clicking button shows floating piece that follows mouse', async ({ page }) => {
@@ -47,32 +75,37 @@ test.describe('Piece Interaction', () => {
     await expect(page.locator('.floating-piece')).not.toBeVisible()
   })
 
-  test('hovering after select highlights the cell under the cursor', async ({ page }) => {
+  test('hovering after select highlights all projected piece cells', async ({ page }) => {
     await page.goto('/')
 
-    // Select Rect (button 0). Anchored on day "10", the 2×3 Rect covers
-    // days 3, 4, 10, 11, 17, 18 — all valid board tiles.
-    await page.locator('.piece-btn').nth(0).click()
+    await page.locator('.piece-btn').nth(6).click() // Z button (index 6)
+    await getTileByLabel(page, '10').hover()
 
-    const day10 = getTileByLabel(page, '10')
-    await day10.hover()
-    await expect(day10).toHaveClass(/bg-amber-600/)
+    await expectTilesHighlighted(page, [2, 3, 10, 17, 18])
+    await expectTilesNotHighlighted(page, [1, 9, 16, 4, 11])
   })
 
-  test('moving the cursor updates the highlighted tile', async ({ page }) => {
+  test('moving the cursor updates the highlighted shape', async ({ page }) => {
     await page.goto('/')
 
-    await page.locator('.piece-btn').nth(0).click()
+    await page.locator('.piece-btn').nth(6).click() // Z button (index 6)
 
     const day10 = getTileByLabel(page, '10')
     const day11 = getTileByLabel(page, '11')
 
     await day10.hover()
-    await expect(day10).toHaveClass(/bg-amber-600/)
+    await expectHighlighted(day10)
+
+    const expectedHighlights = [2, 3, 10, 17, 18]
+    const expectedNonHighlights = [1, 9, 16, 4, 11]
+
+    await expectTilesHighlighted(page, expectedHighlights)
+    await expectTilesNotHighlighted(page, expectedNonHighlights)
 
     await day11.hover()
-    await expect(day11).toHaveClass(/bg-amber-600/)
-    await expect(day10).toHaveClass(/bg-amber-900/)
+
+    await expectTilesHighlighted(page, expectedHighlights.map(t => t + 1))
+    await expectTilesNotHighlighted(page, expectedNonHighlights.map(t => t + 1))
   })
 
   test('moving the cursor off the board clears the highlight', async ({ page }) => {
@@ -82,23 +115,21 @@ test.describe('Piece Interaction', () => {
 
     const jan = getTileByLabel(page, 'Jan')
     await jan.hover()
-    await expect(jan).toHaveClass(/bg-amber-600/)
+    await expectHighlighted(jan)
 
     // Move outside the board entirely. `steps` is required: React's synthetic
     // mouseleave needs intermediate mousemove events to detect the exit.
     await page.mouse.move(5, 5, { steps: 10 })
-    await expect(jan).toHaveClass(/bg-amber-900/)
+    await expectNoHighlights(page)
   })
 
   test('hovering with no piece selected does not highlight any tile', async ({ page }) => {
     await page.goto('/')
 
-    const jan = getTileByLabel(page, 'Jan')
-    await jan.hover()
-    await expect(jan).toHaveClass(/bg-amber-900/)
+    await getTileByLabel(page, 'Jan').hover()
+    await expectNoHighlights(page)
 
-    const day1 = getTileByLabel(page, '1')
-    await day1.hover()
-    await expect(day1).toHaveClass(/bg-amber-900/)
+    await getTileByLabel(page, '1').hover()
+    await expectNoHighlights(page)
   })
 })
