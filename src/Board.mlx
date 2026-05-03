@@ -1,8 +1,16 @@
 let tileSq = "w-18 h-18"
 
 module Tile = struct
-  let[@react.component] make ~(children: string) () =
-    <div className=("tile " ^ tileSq ^ " bg-amber-900 p-0.5")>
+  let[@react.component] make
+      ~(children: string)
+      ?(highlighted = false)
+      ~(onEnter: unit -> unit)
+      () =
+    let bg = if highlighted then "bg-amber-600" else "bg-amber-900" in
+    <div
+      className=("tile " ^ tileSq ^ " " ^ bg ^ " p-0.5")
+      onMouseEnter=(fun _ -> onEnter ())
+    >
       <div className="h-full border border-dashed border-amber-700 rounded-sm flex items-center justify-center text-2xl text-amber-950 font-bold cursor-default select-none">
         (React.string children)
       </div>
@@ -16,19 +24,48 @@ end
 
 let months = [| "Jan"; "Feb"; "Mar"; "Apr"; "May"; "Jun"; "Jul"; "Aug"; "Sep"; "Oct"; "Nov"; "Dec" |]
 
-let[@react.component] make () =
-  <div className="board flex flex-col">
+let[@react.component] make
+    ?(onCellHover = fun _ -> ())
+    ?(highlight = None)
+    () =
+  let highlighted_cell = match highlight with
+    | Some (_, pos) -> Some pos
+    | None -> None
+  in
+  let is_highlighted (row, col) =
+    match highlighted_cell with
+    | Some (hr, hc) -> hr = row && hc = col
+    | None -> false
+  in
+  let onTileEnter pos () = onCellHover (Some pos) in
+
+  <div
+    className="board flex flex-col"
+    onMouseLeave=(fun _ -> onCellHover None)
+  >
     (* Row 1: Jan-Jun *)
     <Row>
       (Array.sub months 0 6
-       |> Array.map (fun m -> <Tile key=("month-" ^ m)>m</Tile>)
+       |> Array.mapi (fun i m ->
+         let pos = (0, i) in
+         <Tile
+           key=("month-" ^ m)
+           highlighted=(is_highlighted pos)
+           onEnter=(onTileEnter pos)
+         >m</Tile>)
        |> React.array)
     </Row>
 
     (* Row 2: Jul-Dec *)
     <Row>
       (Array.sub months 6 6
-       |> Array.map (fun m -> <Tile key=("month-" ^ m)>m</Tile>)
+       |> Array.mapi (fun i m ->
+         let pos = (1, i) in
+         <Tile
+           key=("month-" ^ m)
+           highlighted=(is_highlighted pos)
+           onEnter=(onTileEnter pos)
+         >m</Tile>)
        |> React.array)
     </Row>
 
@@ -38,7 +75,12 @@ let[@react.component] make () =
       <Row key=(Printf.sprintf "days-row-%d" row)>
         (Array.init 7 (fun i ->
           let day = start_day + i in
-          <Tile key=(Printf.sprintf "day-%d" day)>(string_of_int day)</Tile>
+          let pos = (row + 2, i) in
+          <Tile
+            key=(Printf.sprintf "day-%d" day)
+            highlighted=(is_highlighted pos)
+            onEnter=(onTileEnter pos)
+          >(string_of_int day)</Tile>
         ) |> React.array)
       </Row>
     ) |> React.array)
@@ -47,7 +89,12 @@ let[@react.component] make () =
     <Row>
       (Array.init 3 (fun i ->
         let day = 29 + i in
-        <Tile key=(Printf.sprintf "day-%d" day)>(string_of_int day)</Tile>
+        let pos = (6, i) in
+        <Tile
+          key=(Printf.sprintf "day-%d" day)
+          highlighted=(is_highlighted pos)
+          onEnter=(onTileEnter pos)
+        >(string_of_int day)</Tile>
       ) |> React.array)
     </Row>
   </div>
