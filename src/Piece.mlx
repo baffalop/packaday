@@ -19,14 +19,25 @@ module Button = struct
 end
 
 module Floating = struct
+  let cellSize = 66
+
   let[@react.component] make ~(piece:t) ~(initial:Geometry.coord) () =
+    let shape = Shape.of_piece piece in
+
     let pos = Option.value (Hooks.useMouse ()) ~default:initial in
+
+    let (anchor_row, anchor_col) = Shape.anchor shape in
+    let half = cellSize / 2 in
+    let tx = - (anchor_col * cellSize + half) in
+    let ty = - (anchor_row * cellSize + half) in
+
     let style = ReactDOM.Style.make
       ~left:(Printf.sprintf "%dpx" pos.x)
       ~top:(Printf.sprintf "%dpx" pos.y)
+      ~transform:(Printf.sprintf "translate(%dpx, %dpx)" tx ty)
       ()
     in
-    <div style className="floating-piece fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-      <Shape t=(Shape.of_piece piece) cellSize=66 className="fill-rose-400/40" />
+    <div style className="floating-piece fixed pointer-events-none">
+      <Shape t=shape cellSize className="fill-rose-400/40" />
     </div>
 end

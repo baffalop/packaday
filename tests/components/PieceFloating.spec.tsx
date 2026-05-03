@@ -16,8 +16,29 @@ test.describe('Piece.Floating Component', () => {
     await expect(component).toHaveCSS('top', '150px')
   })
 
-  test('floating piece snapshot', async ({ mount, page }) => {
-    const component = await mount(<PieceFloating piece='Snake' initial={{ x: 100, y: 100 }} />)
-    await expect(component).toHaveScreenshot('floating-snake.png')
-  })
+  // Anchor-on-cursor: a fixed-positioned canvas with a lime marker at the
+  // cursor position; the piece's position relative to the marker reveals
+  // whether the anchor cell is centered. Multiple pieces cover the per-piece
+  // transform formula.
+  for (const piece of ['Snake', 'Corner', 'L'] as const) {
+    test(`anchor-on-cursor (${piece})`, async ({ mount }) => {
+      const initial = { x: 200, y: 200 }
+      const harness = await mount(
+        <div style={{
+          position: 'fixed', top: 0, left: 0,
+          width: 400, height: 400,
+          background: '#1a1a1a',
+        }}>
+          <div style={{
+            position: 'absolute',
+            left: initial.x - 3, top: initial.y - 3,
+            width: 6, height: 6,
+            background: 'lime', zIndex: 1,
+          }} />
+          <PieceFloating piece={piece} initial={initial} />
+        </div>,
+      )
+      await expect(harness).toHaveScreenshot(`floating-anchor-${piece.toLowerCase()}.png`)
+    })
+  }
 })
