@@ -11,6 +11,7 @@
 **Architecture:** Anchor encoded in `Shape` data via a new `X` segment variant (exactly one per piece). `Shape.anchor` returns the anchor's `(row, col)` in the matrix; `Shape.cells` exposes offsets from anchor (for future multi-cell projection). `Board` gains `?onCellHover` and `?highlight` props; tiles are addressed by a single `int` index into the flat months-then-days sequence (Jan=0..Dec=11, day 1=12..day 31=42). `Game` consolidates state into a `placement` record so the impossible "hover without selection" combo is unrepresentable.
 
 **Mid-flight deviations from the original plan** (Tasks 1–5 already merged):
+
 - Task 1 added an anchor-agnostic dedup (`unique_by`/`unanchored`) inside `Shape.variations` so X-position differences don't inflate the variation count.
 - Task 3 was reverted: `Shape.make` keeps its bbox-origin matrix walk. The anchor concern lives entirely in `Piece.Floating`, which queries `Shape.anchor` and computes a per-piece transform (`translate(-(anchor_col*cellSize + halfCell), -(anchor_row*cellSize + halfCell))`).
 - Task 4's CT test became a snapshot harness (lime marker + canvas) covering Snake/Corner/L. Per-piece transform string assertions were dropped as too implementation-coupled.
@@ -21,6 +22,7 @@
 **Spec:** `docs/specs/2026-05-01-piece-snapping-design.md`.
 
 **Conventions for the executing engineer:**
+
 - mlx files: `[@react.component]` annotates make functions. Tag-style JSX. `<Foo prop=value>children</Foo>`.
 - mli files keep module APIs constrained — keep them in sync but only expose what's needed.
 - Tests: an inline `module Test = struct ... end` block in the relevant `.mlx` (run via `pnpm test:dune`), plus `.spec.tsx` / `.spec.ts` files under `tests/` (run via `pnpm test:ct` and `pnpm test:e2e`).
@@ -32,6 +34,7 @@
 ## File Inventory
 
 **Modified across all tasks:**
+
 - `src/Shape.mli`, `src/Shape.mlx`
 - `src/Piece.mlx`
 - `src/Board.mli`, `src/Board.mlx`
@@ -43,6 +46,7 @@
 **Snapshots that will regenerate:** `tests/components/PieceFloating.spec.tsx-snapshots/floating-snake.png` (Task 4).
 
 **Snapshots that should NOT regenerate** (verify they don't, investigate if they do):
+
 - `tests/components/Shape.spec.tsx-snapshots/shape-*.png` — anchor-aware viewBox shifts internal origin, but bbox dimensions and rect positions inside the SVG element are unchanged.
 - `tests/components/Board.spec.tsx-snapshots/board.png` — default render (no `highlight` prop) renders identically to today.
 
@@ -55,6 +59,7 @@ Introduces the third segment value, picks an anchor per piece, and updates every
 The TDD framing here is "update the existing tests to encode the new expectation, watch them go red, then change the data model until they're green."
 
 **Files:**
+
 - Modify: `src/Shape.mlx`
 
 - [ ] **Step 1: Update existing inline tests to expect X in matrix literals**
@@ -259,6 +264,7 @@ test "variations for Corner" @@ fun () ->
 ```
 
 Reasoning:
+
 - `Rect` 2 → 4 (X breaks 180° symmetry).
 - `U` 4 → 8 (X breaks 180° symmetry).
 - `Z` stays at 4 (X at the rotational centre (1, 1) preserves symmetry).
@@ -289,6 +295,7 @@ Suggested commit message: `Shape: add X anchor segment variant`
 Two helpers expose the anchor's matrix position and the offsets-from-anchor for all filled cells. Three invariant tests assert "exactly one X per piece" and that rotation/flip preserve the X.
 
 **Files:**
+
 - Modify: `src/Shape.mlx` (helpers + tests)
 - Modify: `src/Shape.mli` (expose helpers)
 
@@ -490,6 +497,7 @@ Suggested commit message: `Shape: add anchor + cells helpers and invariants`
 Rewrite the SVG renderer to be driven by `cells`. The viewBox shifts so the anchor cell's top-left is at SVG (0, 0); rect positions are computed relative to anchor offsets. Asserts a viewBox attribute that includes negative coords for an asymmetric piece (TDD).
 
 **Files:**
+
 - Modify: `src/Shape.mlx` (the `make` function)
 - Modify: `tests/components/Shape.spec.tsx` (add a viewBox assertion)
 
@@ -498,20 +506,23 @@ Rewrite the SVG renderer to be driven by `cells`. The viewBox shifts so the anch
 In `tests/components/Shape.spec.tsx`, append a test inside the `test.describe('Shape component', ...)` block:
 
 ```tsx
-test('viewBox places anchor at SVG origin (negative coords for cells above/left)', async ({ mount }) => {
+test("viewBox places anchor at SVG origin (negative coords for cells above/left)", async ({
+  mount,
+}) => {
   // L has anchor at (row=1, col=0). The cell at (row=0, col=1) is to the
   // right of and above the anchor, and the rest extend below. So the
   // viewBox y should be negative (one cellSize up from origin) and x = 0.
-  const svg = await mount(<Shape t={of_piece('L')} cellSize={10} />)
-  await expect(svg).toHaveAttribute('viewBox', '0 -10 20 40')
-})
+  const svg = await mount(<Shape t={of_piece("L")} cellSize={10} />);
+  await expect(svg).toHaveAttribute("viewBox", "0 -10 20 40");
+});
 ```
 
 Reasoning for the expected `viewBox`:
+
 - L cells (col, row): `(0, 0)`, `(1, 0)`, `(0, 1)`, `(0, 2)`, `(0, 3)`. Anchor at `(0, 1)` in (col, row).
 - Offsets `(dx, dy)`: `(0, -1)`, `(1, -1)`, `(0, 0)`, `(0, 1)`, `(0, 2)`.
 - min_dx = 0, min_dy = -1, max_dx = 1, max_dy = 2.
-- width = (1 - 0 + 1) * 10 = 20, height = (2 - (-1) + 1) * 10 = 40.
+- width = (1 - 0 + 1) _ 10 = 20, height = (2 - (-1) + 1) _ 10 = 40.
 - viewBox = `min_dx*cellSize  min_dy*cellSize  width  height` = `0 -10 20 40`.
 
 - [ ] **Step 2: Run CT — expect failure**
@@ -585,6 +596,7 @@ pnpm test:ct
 ```
 
 Expected:
+
 - The new viewBox test passes.
 - Existing `shape-*.png` snapshot tests pass — bbox dimensions and rect positions inside the SVG element are unchanged; only the viewBox origin shifts (invisible to the rendered pixels).
 - Existing dimension tests (`width=16`, `height=24` for `Rect` at `cellSize=8`) still pass.
@@ -610,6 +622,7 @@ Suggested commit message: `Shape: anchor-aware SVG rendering`
 Replace the bbox-centring `-translate-x-1/2 -translate-y-1/2` with a half-cell translate so the anchor cell's centre is on the cursor.
 
 **Files:**
+
 - Modify: `src/Piece.mlx`
 - Modify: `tests/components/PieceFloating.spec.tsx`
 
@@ -618,33 +631,43 @@ Replace the bbox-centring `-translate-x-1/2 -translate-y-1/2` with a half-cell t
 In `tests/components/PieceFloating.spec.tsx`, replace the file's contents with:
 
 ```tsx
-import { test, expect } from '@playwright/experimental-ct-react'
-import { PieceFloating } from './wrappers'
+import { test, expect } from "@playwright/experimental-ct-react";
+import { PieceFloating } from "./wrappers";
 
-test.describe('Piece.Floating Component', () => {
-  test('starts at initial position then follows mouse, with anchor-centring transform', async ({ mount, page }) => {
-    const component = await mount(<PieceFloating piece='Snake' initial={{ x: 120, y: 80 }} />)
+test.describe("Piece.Floating Component", () => {
+  test("starts at initial position then follows mouse, with anchor-centring transform", async ({
+    mount,
+    page,
+  }) => {
+    const component = await mount(
+      <PieceFloating piece="Snake" initial={{ x: 120, y: 80 }} />,
+    );
 
     // Should be visible immediately at initial position
-    await expect(component).toBeVisible()
-    await expect(component).toHaveCSS('left', '120px')
-    await expect(component).toHaveCSS('top', '80px')
+    await expect(component).toBeVisible();
+    await expect(component).toHaveCSS("left", "120px");
+    await expect(component).toHaveCSS("top", "80px");
 
     // Anchor-centring: half-cell translate (cellSize=66 → 33px each).
     // CSS transforms are computed to a matrix; assert the resolved form.
-    await expect(component).toHaveCSS('transform', 'matrix(1, 0, 0, 1, -33, -33)')
+    await expect(component).toHaveCSS(
+      "transform",
+      "matrix(1, 0, 0, 1, -33, -33)",
+    );
 
     // After mouse moves, should follow mouse
-    await page.mouse.move(200, 150)
-    await expect(component).toHaveCSS('left', '200px')
-    await expect(component).toHaveCSS('top', '150px')
-  })
+    await page.mouse.move(200, 150);
+    await expect(component).toHaveCSS("left", "200px");
+    await expect(component).toHaveCSS("top", "150px");
+  });
 
-  test('floating piece snapshot', async ({ mount }) => {
-    const component = await mount(<PieceFloating piece='Snake' initial={{ x: 100, y: 100 }} />)
-    await expect(component).toHaveScreenshot('floating-snake.png')
-  })
-})
+  test("floating piece snapshot", async ({ mount }) => {
+    const component = await mount(
+      <PieceFloating piece="Snake" initial={{ x: 100, y: 100 }} />,
+    );
+    await expect(component).toHaveScreenshot("floating-snake.png");
+  });
+});
 ```
 
 - [ ] **Step 2: Run CT — expect failure**
@@ -679,6 +702,7 @@ end
 ```
 
 Notes:
+
 - The Tailwind `-translate-x-1/2 -translate-y-1/2` classes are removed.
 - The translate is now expressed inline via the `transform` style, half a cell in each axis (33px for `cellSize=66`).
 
@@ -697,6 +721,7 @@ pnpm test:ct
 ```
 
 Expected:
+
 - The transform assertion passes.
 - The `floating-snake.png` snapshot test fails (visuals changed because the SVG anchor moved combined with the new translate).
 
@@ -729,6 +754,7 @@ Suggested commit message: `Piece.Floating: anchor-on-cursor positioning`
 `Tile` gains `?highlighted` and `~onEnter`. `Board` gains `?onCellHover` and `?highlight`, threads `(row, col)` through each render block, and clears hover via a board-container `onMouseLeave`. Three CT tests cover the new behaviour.
 
 **Files:**
+
 - Modify: `src/Board.mlx`
 - Modify: `src/Board.mli`
 - Modify: `tests/components/Board.spec.tsx`
@@ -738,50 +764,54 @@ Suggested commit message: `Piece.Floating: anchor-on-cursor positioning`
 In `tests/components/Board.spec.tsx`, append the following inside the `test.describe('Board Component', ...)` block (just before the closing `})`):
 
 ```tsx
-test('onCellHover fires with tile index on tile mouseEnter', async ({ mount }) => {
-  const calls: Array<number | null> = []
+test("onCellHover fires with tile index on tile mouseEnter", async ({
+  mount,
+}) => {
+  const calls: Array<number | null> = [];
   const component = await mount(
-    <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
-  )
+    <Board
+      onCellHover={(tile: number | undefined) => calls.push(tile ?? null)}
+    />,
+  );
 
   // Hover Jan: tile 0
-  await component.getByText('Jan', { exact: true }).hover()
-  expect(calls.at(-1)).toBe(0)
+  await component.getByText("Jan", { exact: true }).hover();
+  expect(calls.at(-1)).toBe(0);
 
   // Hover day "15": tile 26 (months 0-11, days start at 12, day d → 11 + d)
-  await component.getByText('15', { exact: true }).hover()
-  expect(calls.at(-1)).toBe(26)
-})
+  await component.getByText("15", { exact: true }).hover();
+  expect(calls.at(-1)).toBe(26);
+});
 
-test('onCellHover fires None on board mouseLeave', async ({ mount, page }) => {
-  const calls: Array<number | null> = []
+test("onCellHover fires None on board mouseLeave", async ({ mount, page }) => {
+  const calls: Array<number | null> = [];
   const component = await mount(
-    <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
-  )
+    <Board
+      onCellHover={(tile: number | undefined) => calls.push(tile ?? null)}
+    />,
+  );
 
-  await component.getByText('Jan', { exact: true }).hover()
-  expect(calls.at(-1)).toBe(0)
+  await component.getByText("Jan", { exact: true }).hover();
+  expect(calls.at(-1)).toBe(0);
 
   // Move the cursor outside the board. `steps` is required: React's synthetic
   // mouseleave needs intermediate mousemove events to detect the exit.
-  await page.mouse.move(0, 0, { steps: 10 })
-  expect(calls.at(-1)).toBeNull()
-})
+  await page.mouse.move(0, 0, { steps: 10 });
+  expect(calls.at(-1)).toBeNull();
+});
 
-test('highlight prop highlights only the matching tile', async ({ mount }) => {
+test("highlight prop highlights only the matching tile", async ({ mount }) => {
   // @ts-expect-error Melange output has no type declarations
-  const { of_piece } = await import('../../src/Shape.js')
+  const { of_piece } = await import("../../src/Shape.js");
   // Sep is tile 8 (Jan=0..Jun=5, Jul=6, Aug=7, Sep=8).
-  const component = await mount(
-    <Board highlight={[of_piece('Rect'), 8]} />,
-  )
+  const component = await mount(<Board highlight={[of_piece("Rect"), 8]} />);
 
-  const sep = component.getByText('Sep', { exact: true }).locator('..')
-  const jan = component.getByText('Jan', { exact: true }).locator('..')
+  const sep = component.getByText("Sep", { exact: true }).locator("..");
+  const jan = component.getByText("Jan", { exact: true }).locator("..");
 
-  await expect(sep).toHaveClass(/bg-amber-600/)
-  await expect(jan).toHaveClass(/bg-amber-900/)
-})
+  await expect(sep).toHaveClass(/bg-amber-600/);
+  await expect(jan).toHaveClass(/bg-amber-900/);
+});
 ```
 
 Note on the `highlight` prop shape: Melange surfaces an OCaml `(Shape.t * int) option` from TS as a 2-element array `[shape, tile]`. Verified working without adjustment.
@@ -931,6 +961,7 @@ pnpm test:ct
 ```
 
 Expected:
+
 - The three new behavioural tests pass.
 - Existing Board tests pass.
 - `board.png` snapshot is unchanged (default `highlighted=false` everywhere produces identical visuals).
@@ -957,6 +988,7 @@ Suggested commit message: `Board: hover + single-cell highlight`
 Refactor `Game` state from `selected` to a single `placement` record (impossible "hover-without-selection" combo unrepresentable). Wire `onCellHover` and compose `highlight`. Add three e2e tests covering snap-on-hover behaviour.
 
 **Files:**
+
 - Modify: `src/Game.mlx`
 - Modify: `tests/e2e/piece-interaction.spec.ts`
 
@@ -976,13 +1008,20 @@ test('hovering after select highlights the cell under the cursor', async ({ page
   await jan.hover()
   await expect(jan).toHaveClass(/bg-amber-600/)
 
-  // Hover Mar; highlight follows.
-  const feb = page.getByText('Feb', { exact: true }).locator('..')
-  const mar = page.getByText('Mar', { exact: true }).locator('..')
-  await mar.hover()
-  await expect(mar).toHaveClass(/bg-amber-600/)
-  await expect(jan).toHaveClass(/bg-amber-900/)
-  await expect(feb).toHaveClass(/bg-amber-900/)
+test('moving the cursor updates the highlighted tile', async ({ page }) => {
+  await page.goto('/')
+
+  await page.locator('.piece-btn').nth(0).click()
+
+  const day10 = page.getByText('10', { exact: true }).locator('..')
+  const day11 = page.getByText('11', { exact: true }).locator('..')
+
+  await day10.hover()
+  await expect(day10).toHaveClass(/bg-amber-600/)
+
+  await day11.hover()
+  await expect(day11).toHaveClass(/bg-amber-600/)
+  await expect(day10).toHaveClass(/bg-amber-900/)
 })
 
 test('moving the cursor off the board clears the highlight', async ({ page }) => {
@@ -1076,6 +1115,7 @@ let[@react.component] make () =
 ```
 
 Notes:
+
 - `placement` is local to this file — no mli change.
 - Selecting a new piece resets `hovered = None`. The cursor is on the panel at click time; the next `mouseEnter` over the board populates it.
 
@@ -1122,6 +1162,7 @@ Suggested commit message: `Game: placement record + snap-on-hover behaviour`
 ## Self-Review Notes
 
 Coverage check against the spec sections:
+
 - §2 Shape representation → Tasks 1, 2, 3.
 - §3 Piece.Floating → Task 4.
 - §4 Board → Task 5.

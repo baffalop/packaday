@@ -1,5 +1,11 @@
 open Fun
 
+type placement = {
+  piece    : Shape.piece;
+  initial  : Geometry.coord;
+  on_pos  : int option;  (* Board tile index — see Board.mli *)
+}
+
 module PieceSelectPanel = struct
   let[@react.component] make ~onPieceSelect () =
     <div className="panel bg-rose-900/60 border border-rose-800 rounded-lg px-4 py-8 grid gap-4 grid-cols-2 align-items-center justify-items-center">
@@ -10,16 +16,26 @@ module PieceSelectPanel = struct
 end
 
 let[@react.component] make () =
-  let (selected, setSelected) = React.useState @@ Fn.const None in
+  let (hoverPlacement, setHoverPlacement) = React.useState @@ Fn.const None in
 
-  let handleClickAnywhere _ = setSelected @@ Fn.const None in
+  let onPieceSelect (piece, initial) =
+    setHoverPlacement @@ Fn.const @@ Some { piece; initial; on_pos = None }
+  in
+  let onCellHover on_pos = setHoverPlacement @@ Option.map @@ fun p -> { p with on_pos } in
+  let onClickAnywhere _ = setHoverPlacement @@ Fn.const None in
 
-  <div className="flex items-center justify-center min-h-screen" onClick=handleClickAnywhere>
+  let highlight = match hoverPlacement with
+    | Some { piece; on_pos = Some pos; _ } ->
+        Some (Shape.of_piece piece, pos)
+    | _ -> None
+  in
+
+  <div className="flex items-center justify-center min-h-screen" onClick=onClickAnywhere>
     <div className="flex items-start justify-center gap-12">
-      <Board />
-      <PieceSelectPanel onPieceSelect=(setSelected << Fn.const << Option.some) />
+      <Board onCellHover highlight />
+      <PieceSelectPanel onPieceSelect />
     </div>
-    (match selected with
-     | Some (piece, coord) -> <Piece.Floating piece initial=coord />
+    (match hoverPlacement with
+     | Some { piece; initial; _ } -> <Piece.Floating piece initial />
      | None -> React.null)
   </div>
