@@ -8,14 +8,15 @@
 
 **Goal:** When a piece is selected, hovering the board highlights the cell where the piece's anchor would land. The floating piece keeps following the cursor with its anchor (not bbox centre) on the cursor.
 
-**Architecture:** Anchor encoded in `Shape` data via a new `X` segment variant (exactly one per piece). `Shape.anchor` returns the anchor's `(row, col)` in the matrix; `Shape.cells` exposes offsets from anchor (for future multi-cell projection). `Board` gains `?onCellHover` and `?highlight` props; tiles are addressed by a single `int` index into the flat months-then-days sequence (Jan=0..Dec=11, day 1=12..day 31=42). `Game` consolidates state into a `placement` record so the impossible "hover without selection" combo is unrepresentable.
+**Architecture:** Anchor encoded in `Shape` data via a new `X` segment variant (exactly one per piece). `Shape.anchor` returns the anchor's `(row, col)` in the matrix; `Shape.cells` exposes offsets from anchor. `Board` gains `?onCellHover` and `?highlight` props; tiles are addressed by a single `int` index into the flat months-then-days sequence (Jan=0..Dec=11, day 1=12..day 31=42). `Board` projects the highlighted shape's cells from the anchor tile using internal `coords_of_index` / `index_of_coords` helpers; cells off the board are silently dropped. `Game` consolidates state into a `placement` record so the impossible "hover without selection" combo is unrepresentable.
 
 **Mid-flight deviations from the original plan** (Tasks 1–5 already merged):
 
 - Task 1 added an anchor-agnostic dedup (`unique_by`/`unanchored`) inside `Shape.variations` so X-position differences don't inflate the variation count.
 - Task 3 was reverted: `Shape.make` keeps its bbox-origin matrix walk. The anchor concern lives entirely in `Piece.Floating`, which queries `Shape.anchor` and computes a per-piece transform (`translate(-(anchor_col*cellSize + halfCell), -(anchor_row*cellSize + halfCell))`).
 - Task 4's CT test became a snapshot harness (lime marker + canvas) covering Snake/Corner/L. Per-piece transform string assertions were dropped as too implementation-coupled.
-- Task 5's tile addressing changed from `(int * int)` to a single `int` index. Multi-cell projection (deferred) will need `coords_of_index` / `index_of_coords` helpers inside `Board`.
+- Task 5's tile addressing changed from `(int * int)` to a single `int` index. The implied `coords_of_index` / `index_of_coords` helpers were added in Task 7.
+- Task 7 was added after Task 6: multi-cell shape highlighting (originally a deferred item from spec §6).
 
 **Tech Stack:** OCaml + mlx + Melange + ReasonReact (frontend); Fest (OCaml unit); Playwright CT and e2e (TypeScript). Build with `pnpm build`. Run all tests with `pnpm test`. Snapshot regen: `pnpm test:snap`.
 
@@ -1159,6 +1160,54 @@ Suggested commit message: `Game: placement record + snap-on-hover behaviour`
 
 ---
 
+## Task 7: Multi-cell shape highlighting
+
+Highlight the entire piece silhouette (every projected cell) instead of just the anchor. Cells projected off the board are silently dropped — partial off-board placements highlight only the on-board portion. **Full-fit validation is deferred** and will be coupled with a different highlight style + click-to-place (see spec §6).
+
+**Files:**
+
+- Modify: `src/Board.mlx` — add `coords_of_index` and `index_of_coords` (private layout helpers); rewrite `is_highlighted` to project `Shape.cells` from the anchor tile.
+- Modify: `tests/components/Board.spec.tsx` — update existing single-tile highlight test to assert the full projected silhouette; add a partial-off-board test; extract `expectHighlighted` / `expectNotHighlighted` / `expectTilesHighlighted` / `expectTilesNotHighlighted` helpers.
+- Modify: `tests/e2e/piece-interaction.spec.ts` — update existing highlight tests to assert all projected cells; extract the same helper pattern (`getTileByLabel`, `expectHighlighted`/`expectNotHighlighted`, `expectTilesHighlighted`/`expectTilesNotHighlighted`, `expectNoHighlights`).
+
+**Key snippets:**
+
+```ocaml
+(** Tile index → (row, col) on the 7-wide grid the board visually occupies. *)
+let coords_of_index = function
+  | i when i < 6  -> (0, i)
+  | i when i < 12 -> (1, i - 6)
+  | i when i < 40 -> let i = i - 12 in (2 + i / 7, i mod 7)
+  | i when i < 43 -> (6, i - 40)
+  | i -> failwith @@ Printf.sprintf "Board.coords_of_index: %d out of range" i
+
+(** (row, col) → Some tile if on the board, None if in a gap or off-grid. *)
+let index_of_coords = function
+  | 0, c when c >= 0 && c < 6 -> Some c
+  | 1, c when c >= 0 && c < 6 -> Some (6 + c)
+  | r, c when r >= 2 && r <= 5 && c >= 0 && c < 7 -> Some (12 + (r - 2) * 7 + c)
+  | 6, c when c >= 0 && c < 3 -> Some (40 + c)
+  | _ -> None
+```
+
+```ocaml
+let highlighted_tiles = match highlight with
+  | None -> []
+  | Some (shape, anchor) ->
+    let (anchor_row, anchor_col) = coords_of_index anchor in
+    Shape.cells shape
+    |> List.filter_map (fun (dx, dy) ->
+      index_of_coords (anchor_row + dy, anchor_col + dx))
+in
+let is_highlighted tile = List.mem tile highlighted_tiles in
+```
+
+The two layout helpers stay private (no mli export) — they encode Board-internal grid topology.
+
+Suggested commit message: `Board: highlight full piece projection from anchor`
+
+---
+
 ## Self-Review Notes
 
 Coverage check against the spec sections:
@@ -1170,6 +1219,6 @@ Coverage check against the spec sections:
 - §7.1 Dune/Fest tests → Tasks 1 (test updates), 2 (anchor + cells + invariants).
 - §7.2 CT tests → Tasks 3 (Shape viewBox), 4 (PieceFloating transform + snapshot regen), 5 (Board hover + highlight).
 - §7.3 E2E tests → Task 6.
-- §6 Deferred items → not implemented (intentionally).
+- §6 Deferred items → multi-cell highlight implemented in Task 7; the rest (silhouette overlay, validation, click-to-place, mobile/touch) remain deferred.
 
 No placeholder text. Type signatures used in later tasks (`Shape.cells`, `Shape.anchor`, `Board.makeProps`'s `onCellHover` / `highlight`, `Game.placement`) are introduced before they're consumed. Each task ends with a "Stop for user review" gate.
