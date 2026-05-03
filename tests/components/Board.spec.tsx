@@ -3,7 +3,7 @@ import type { Locator } from '@playwright/test'
 import { Board } from './wrappers'
 
 test.describe('Board Component', () => {
-  const highlightClass = /bg-amber-600/
+  const highlightClass = /bg-amber-800/
   const highlightNoneClass = /bg-amber-900/
 
   function getTileByLabel (component: MountResult, label: string) {

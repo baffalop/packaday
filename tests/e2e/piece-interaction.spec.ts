@@ -2,7 +2,7 @@ import { test, expect } from './setup'
 import type { Locator, Page } from '@playwright/test'
 
 test.describe('Piece Interaction', () => {
-  const highlightClass = /bg-amber-600/
+  const highlightClass = /bg-amber-800/
   const highlightNoneClass = /bg-amber-900/
   const highlightClassSelector = `.${highlightClass}`.replaceAll('/', '')
 

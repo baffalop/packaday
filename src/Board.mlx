@@ -6,7 +6,7 @@ module Tile = struct
       ?(highlighted = false)
       ~(onEnter: unit -> unit)
       () =
-    let bg = if highlighted then "bg-amber-600" else "bg-amber-900" in
+    let bg = if highlighted then "bg-amber-800" else "bg-amber-900" in
     <div
       className=("tile " ^ tileSq ^ " " ^ bg ^ " p-0.5")
       onMouseEnter=(fun _ -> onEnter ())
