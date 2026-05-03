@@ -3,9 +3,11 @@ This is a puzzle game webapp, written in Ocaml with the mlx syntax extension, Me
 3 layers of testing (TDD where possible):
 
 - Inline expect tests (OCaml unit tests)
+  - `pnpm test:dune` or `opam exec -- dune runtest` (**no output means success**)
 - Playwright (written in typescript):
-  - e2e
-  - Component tests (requires declaring tsx wrappers: see `wrappers.tsx`)
+  - e2e (`pnpm test:e2e`)
+  - Component tests (`pnpm test:ct`)
+    - (adding components requires declaring tsx wrappers: see `wrappers.tsx`)
   - Both of the above include some visual snapshots
 
 Rules:
