@@ -8,7 +8,13 @@
 
 **Goal:** When a piece is selected, hovering the board highlights the cell where the piece's anchor would land. The floating piece keeps following the cursor with its anchor (not bbox centre) on the cursor.
 
-**Architecture:** Anchor encoded in `Shape` data via a new `X` segment variant (exactly one per piece). `Shape.cells` exposes offsets from anchor; the SVG renderer becomes anchor-aware (anchor at SVG origin). `Board` gains `?onCellHover` and `?highlight` props; `Game` consolidates state into a `placement` record so the impossible "hover without selection" combo is unrepresentable.
+**Architecture:** Anchor encoded in `Shape` data via a new `X` segment variant (exactly one per piece). `Shape.anchor` returns the anchor's `(row, col)` in the matrix; `Shape.cells` exposes offsets from anchor (for future multi-cell projection). `Board` gains `?onCellHover` and `?highlight` props; tiles are addressed by a single `int` index into the flat months-then-days sequence (Jan=0..Dec=11, day 1=12..day 31=42). `Game` consolidates state into a `placement` record so the impossible "hover without selection" combo is unrepresentable.
+
+**Mid-flight deviations from the original plan** (Tasks 1–5 already merged):
+- Task 1 added an anchor-agnostic dedup (`unique_by`/`unanchored`) inside `Shape.variations` so X-position differences don't inflate the variation count.
+- Task 3 was reverted: `Shape.make` keeps its bbox-origin matrix walk. The anchor concern lives entirely in `Piece.Floating`, which queries `Shape.anchor` and computes a per-piece transform (`translate(-(anchor_col*cellSize + halfCell), -(anchor_row*cellSize + halfCell))`).
+- Task 4's CT test became a snapshot harness (lime marker + canvas) covering Snake/Corner/L. Per-piece transform string assertions were dropped as too implementation-coupled.
+- Task 5's tile addressing changed from `(int * int)` to a single `int` index. Multi-cell projection (deferred) will need `coords_of_index` / `index_of_coords` helpers inside `Board`.
 
 **Tech Stack:** OCaml + mlx + Melange + ReasonReact (frontend); Fest (OCaml unit); Playwright CT and e2e (TypeScript). Build with `pnpm build`. Run all tests with `pnpm test`. Snapshot regen: `pnpm test:snap`.
 
@@ -732,52 +738,53 @@ Suggested commit message: `Piece.Floating: anchor-on-cursor positioning`
 In `tests/components/Board.spec.tsx`, append the following inside the `test.describe('Board Component', ...)` block (just before the closing `})`):
 
 ```tsx
-test('onCellHover fires with cell coords on tile mouseEnter', async ({ mount }) => {
-  const calls: Array<[number, number] | null> = []
+test('onCellHover fires with tile index on tile mouseEnter', async ({ mount }) => {
+  const calls: Array<number | null> = []
   const component = await mount(
-    <Board onCellHover={(pos: [number, number] | undefined) => calls.push(pos ?? null)} />,
+    <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
   )
 
-  // Hover Jan: row 0, col 0
+  // Hover Jan: tile 0
   await component.getByText('Jan', { exact: true }).hover()
-  expect(calls.at(-1)).toEqual([0, 0])
+  expect(calls.at(-1)).toBe(0)
 
-  // Hover day "15": row 4, col 0 (days 1-28 start at row 2;
-  // 15 - 1 = 14 = 2*7 + 0 → block-row 2, col 0 → (2 + 2, 0) = (4, 0))
+  // Hover day "15": tile 26 (months 0-11, days start at 12, day d → 11 + d)
   await component.getByText('15', { exact: true }).hover()
-  expect(calls.at(-1)).toEqual([4, 0])
+  expect(calls.at(-1)).toBe(26)
 })
 
 test('onCellHover fires None on board mouseLeave', async ({ mount, page }) => {
-  const calls: Array<[number, number] | null> = []
+  const calls: Array<number | null> = []
   const component = await mount(
-    <Board onCellHover={(pos: [number, number] | undefined) => calls.push(pos ?? null)} />,
+    <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
   )
 
   await component.getByText('Jan', { exact: true }).hover()
-  expect(calls.at(-1)).toEqual([0, 0])
+  expect(calls.at(-1)).toBe(0)
 
-  // Move the cursor outside the board.
-  await page.mouse.move(0, 0)
+  // Move the cursor outside the board. `steps` is required: React's synthetic
+  // mouseleave needs intermediate mousemove events to detect the exit.
+  await page.mouse.move(0, 0, { steps: 10 })
   expect(calls.at(-1)).toBeNull()
 })
 
 test('highlight prop highlights only the matching tile', async ({ mount }) => {
   // @ts-expect-error Melange output has no type declarations
   const { of_piece } = await import('../../src/Shape.js')
+  // Sep is tile 8 (Jan=0..Jun=5, Jul=6, Aug=7, Sep=8).
   const component = await mount(
-    <Board highlight={[of_piece('Rect'), [0, 0]]} />,
+    <Board highlight={[of_piece('Rect'), 8]} />,
   )
 
+  const sep = component.getByText('Sep', { exact: true }).locator('..')
   const jan = component.getByText('Jan', { exact: true }).locator('..')
-  const feb = component.getByText('Feb', { exact: true }).locator('..')
 
-  await expect(jan).toHaveClass(/bg-amber-600/)
-  await expect(feb).toHaveClass(/bg-amber-900/)
+  await expect(sep).toHaveClass(/bg-amber-600/)
+  await expect(jan).toHaveClass(/bg-amber-900/)
 })
 ```
 
-Note on the `highlight` prop shape: Melange surfaces an OCaml `(Shape.t * (int * int)) option` from TS as a tuple. If after Step 5 the runtime shape doesn't match `[of_piece('Rect'), [0, 0]]`, inspect compiled `src/Board.js` to see how the prop is destructured and adjust the test value.
+Note on the `highlight` prop shape: Melange surfaces an OCaml `(Shape.t * int) option` from TS as a 2-element array `[shape, tile]`. Verified working without adjustment.
 
 - [ ] **Step 2: Run CT — expect all three new tests fail**
 
@@ -792,17 +799,20 @@ Expected: new tests fail because Board doesn't accept `onCellHover` or `highligh
 Replace the contents with:
 
 ```ocaml
+(** Tiles are addressed by their position in a flat sequence:
+    months 0–11 (Jan=0 .. Dec=11) followed by days 12–42 (1=12 .. 31=42). *)
+
 val makeProps :
-  ?onCellHover:((int * int) option -> unit) ->
-  ?highlight:(Shape.t * (int * int)) option ->
+  ?onCellHover:(int option -> unit) ->
+  ?highlight:(Shape.t * int) option ->
   ?key:string ->
   unit ->
-  < onCellHover : ((int * int) option -> unit) option;
-    highlight   : (Shape.t * (int * int)) option option > Js.t
+  < onCellHover : (int option -> unit) option;
+    highlight   : (Shape.t * int) option option > Js.t
 
 val make :
-  < onCellHover : ((int * int) option -> unit) option;
-    highlight   : (Shape.t * (int * int)) option option > Js.t ->
+  < onCellHover : (int option -> unit) option;
+    highlight   : (Shape.t * int) option option > Js.t ->
   React.element
 ```
 
@@ -836,72 +846,68 @@ let[@react.component] make
     ?(onCellHover = fun _ -> ())
     ?(highlight = None)
     () =
-  let highlighted_cell = match highlight with
-    | Some (_, pos) -> Some pos
+  let highlighted_tile = match highlight with
+    | Some (_, tile) -> Some tile
     | None -> None
   in
-  let is_highlighted (row, col) =
-    match highlighted_cell with
-    | Some (hr, hc) -> hr = row && hc = col
-    | None -> false
-  in
-  let onTileEnter pos () = onCellHover (Some pos) in
+  let is_highlighted tile = highlighted_tile = Some tile in
+  let onTileEnter tile () = onCellHover (Some tile) in
 
   <div
     className="board flex flex-col"
     onMouseLeave=(fun _ -> onCellHover None)
   >
-    (* Row 1: Jan-Jun *)
+    (* Row 1: Jan-Jun (tiles 0-5) *)
     <Row>
       (Array.sub months 0 6
        |> Array.mapi (fun i m ->
-         let pos = (0, i) in
+         let tile = i in
          <Tile
            key=("month-" ^ m)
-           highlighted=(is_highlighted pos)
-           onEnter=(onTileEnter pos)
+           highlighted=(is_highlighted tile)
+           onEnter=(onTileEnter tile)
          >m</Tile>)
        |> React.array)
     </Row>
 
-    (* Row 2: Jul-Dec *)
+    (* Row 2: Jul-Dec (tiles 6-11) *)
     <Row>
       (Array.sub months 6 6
        |> Array.mapi (fun i m ->
-         let pos = (1, i) in
+         let tile = 6 + i in
          <Tile
            key=("month-" ^ m)
-           highlighted=(is_highlighted pos)
-           onEnter=(onTileEnter pos)
+           highlighted=(is_highlighted tile)
+           onEnter=(onTileEnter tile)
          >m</Tile>)
        |> React.array)
     </Row>
 
-    (* Rows 3-6: Days 1-28, 7 per row *)
+    (* Rows 3-6: Days 1-28, 7 per row (tiles 12-39) *)
     (Array.init 4 (fun row ->
       let start_day = row * 7 + 1 in
       <Row key=(Printf.sprintf "days-row-%d" row)>
         (Array.init 7 (fun i ->
           let day = start_day + i in
-          let pos = (row + 2, i) in
+          let tile = 12 + row * 7 + i in
           <Tile
             key=(Printf.sprintf "day-%d" day)
-            highlighted=(is_highlighted pos)
-            onEnter=(onTileEnter pos)
+            highlighted=(is_highlighted tile)
+            onEnter=(onTileEnter tile)
           >(string_of_int day)</Tile>
         ) |> React.array)
       </Row>
     ) |> React.array)
 
-    (* Row 7: Days 29-31 *)
+    (* Row 7: Days 29-31 (tiles 40-42) *)
     <Row>
       (Array.init 3 (fun i ->
         let day = 29 + i in
-        let pos = (6, i) in
+        let tile = 40 + i in
         <Tile
           key=(Printf.sprintf "day-%d" day)
-          highlighted=(is_highlighted pos)
-          onEnter=(onTileEnter pos)
+          highlighted=(is_highlighted tile)
+          onEnter=(onTileEnter tile)
         >(string_of_int day)</Tile>
       ) |> React.array)
     </Row>
@@ -988,8 +994,9 @@ test('moving the cursor off the board clears the highlight', async ({ page }) =>
   await jan.hover()
   await expect(jan).toHaveClass(/bg-amber-600/)
 
-  // Move outside the board entirely.
-  await page.mouse.move(5, 5)
+  // Move outside the board entirely. `steps` is required: React's synthetic
+  // mouseleave needs intermediate mousemove events to detect the exit.
+  await page.mouse.move(5, 5, { steps: 10 })
   await expect(jan).toHaveClass(/bg-amber-900/)
 })
 
@@ -1026,7 +1033,7 @@ open Fun
 type placement = {
   piece    : Shape.piece;
   initial  : Geometry.coord;
-  hovered  : (int * int) option;
+  hovered  : int option;  (* Board tile index — see Board.mli *)
 }
 
 module PieceSelectPanel = struct

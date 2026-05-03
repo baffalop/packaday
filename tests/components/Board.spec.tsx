@@ -62,30 +62,29 @@ test.describe('Board Component', () => {
     await expect(component).toHaveScreenshot('board.png')
   })
 
-  test('onCellHover fires with cell coords on tile mouseEnter', async ({ mount }) => {
-    const calls: Array<[number, number] | null> = []
+  test('onCellHover fires with tile index on tile mouseEnter', async ({ mount }) => {
+    const calls: Array<number | null> = []
     const component = await mount(
-      <Board onCellHover={(pos: [number, number] | undefined) => calls.push(pos ?? null)} />,
+      <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
     )
 
-    // Hover Jan: row 0, col 0
+    // Hover Jan: tile 0
     await component.getByText('Jan', { exact: true }).hover()
-    expect(calls.at(-1)).toEqual([0, 0])
+    expect(calls.at(-1)).toBe(0)
 
-    // Hover day "15": row 4, col 0 (days 1-28 start at row 2;
-    // 15 - 1 = 14 = 2*7 + 0 → block-row 2, col 0 → (2 + 2, 0) = (4, 0))
+    // Hover day "15": tile 26 (months 0-11, days 12+, so day d → 11 + d → 15 → 26)
     await component.getByText('15', { exact: true }).hover()
-    expect(calls.at(-1)).toEqual([4, 0])
+    expect(calls.at(-1)).toBe(26)
   })
 
   test('onCellHover fires None on board mouseLeave', async ({ mount, page }) => {
-    const calls: Array<[number, number] | null> = []
+    const calls: Array<number | null> = []
     const component = await mount(
-      <Board onCellHover={(pos: [number, number] | undefined) => calls.push(pos ?? null)} />,
+      <Board onCellHover={(tile: number | undefined) => calls.push(tile ?? null)} />,
     )
 
     await component.getByText('Jan', { exact: true }).hover()
-    expect(calls.at(-1)).toEqual([0, 0])
+    expect(calls.at(-1)).toBe(0)
 
     // Move mouse outside the board (board starts at ~48,48; move to 0,0 is outside).
     await page.mouse.move(0, 0, { steps: 10 })
@@ -95,8 +94,9 @@ test.describe('Board Component', () => {
   test('highlight prop highlights only the matching tile', async ({ mount }) => {
     // @ts-expect-error Melange output has no type declarations
     const { of_piece } = await import('../../src/Shape.js')
+    // Sep is tile 8 (Jan=0..Jun=5, Jul=6, Aug=7, Sep=8).
     const component = await mount(
-      <Board highlight={[of_piece('Rect'), [1, 2]]} />,
+      <Board highlight={[of_piece('Rect'), 8]} />,
     )
 
     await expect(getTileByLabel(component, 'Sep')).toHaveClass(/bg-amber-600/)

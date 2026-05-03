@@ -28,72 +28,66 @@ let[@react.component] make
     ?(onCellHover = fun _ -> ())
     ?(highlight = None)
     () =
-  let highlighted_cell = match highlight with
-    | Some (_, pos) -> Some pos
-    | None -> None
-  in
-  let is_highlighted (row, col) =
-    match highlighted_cell with
-    | Some (hr, hc) -> hr = row && hc = col
-    | None -> false
-  in
-  let onTileEnter pos () = onCellHover (Some pos) in
+  let highlighted_tile = Option.map snd highlight in
+  let is_highlighted tile = highlighted_tile = Some tile in
+
+  let onTileEnter tile () = onCellHover (Some tile) in
 
   <div
     className="board flex flex-col"
     onMouseLeave=(fun _ -> onCellHover None)
   >
-    (* Row 1: Jan-Jun *)
+    (* Row 1: Jan-Jun (tiles 0-5) *)
     <Row>
       (Array.sub months 0 6
        |> Array.mapi (fun i m ->
-         let pos = (0, i) in
+         let tile = i in
          <Tile
            key=("month-" ^ m)
-           highlighted=(is_highlighted pos)
-           onEnter=(onTileEnter pos)
+           highlighted=(is_highlighted tile)
+           onEnter=(onTileEnter tile)
          >m</Tile>)
        |> React.array)
     </Row>
 
-    (* Row 2: Jul-Dec *)
+    (* Row 2: Jul-Dec (tiles 6-11) *)
     <Row>
       (Array.sub months 6 6
        |> Array.mapi (fun i m ->
-         let pos = (1, i) in
+         let tile = 6 + i in
          <Tile
            key=("month-" ^ m)
-           highlighted=(is_highlighted pos)
-           onEnter=(onTileEnter pos)
+           highlighted=(is_highlighted tile)
+           onEnter=(onTileEnter tile)
          >m</Tile>)
        |> React.array)
     </Row>
 
-    (* Rows 3-6: Days 1-28, 7 per row *)
+    (* Rows 3-6: Days 1-28, 7 per row (tiles 12-39) *)
     (Array.init 4 (fun row ->
       let start_day = row * 7 + 1 in
       <Row key=(Printf.sprintf "days-row-%d" row)>
         (Array.init 7 (fun i ->
           let day = start_day + i in
-          let pos = (row + 2, i) in
+          let tile = 12 + row * 7 + i in
           <Tile
             key=(Printf.sprintf "day-%d" day)
-            highlighted=(is_highlighted pos)
-            onEnter=(onTileEnter pos)
+            highlighted=(is_highlighted tile)
+            onEnter=(onTileEnter tile)
           >(string_of_int day)</Tile>
         ) |> React.array)
       </Row>
     ) |> React.array)
 
-    (* Row 7: Days 29-31 *)
+    (* Row 7: Days 29-31 (tiles 40-42) *)
     <Row>
       (Array.init 3 (fun i ->
         let day = 29 + i in
-        let pos = (6, i) in
+        let tile = 40 + i in
         <Tile
           key=(Printf.sprintf "day-%d" day)
-          highlighted=(is_highlighted pos)
-          onEnter=(onTileEnter pos)
+          highlighted=(is_highlighted tile)
+          onEnter=(onTileEnter tile)
         >(string_of_int day)</Tile>
       ) |> React.array)
     </Row>
